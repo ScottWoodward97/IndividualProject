@@ -5,6 +5,7 @@ import actions
 import numpy as np
 
 import time
+import os
 
 g = Golf()
 
@@ -18,12 +19,18 @@ GAME = g.play_pair(p1, p2)
 
 t_2 = time.time()
 
+print(os.getcwd())
+
+#if not os.path.exists('games'):
+#    os.makedirs('games')
+    
+#with open(os.path.join('games','test_game_0.txt'), 'w+') as f:
+#    f.write(GAME[0])
+
+#with open(os.path.join('games','test_game_1.txt'), 'w+') as f:
+#    f.write(GAME[1])
 
 #print(GAME)
 print(Golf_Analyser.extract_scores(GAME[0]))
 print(Golf_Analyser.extract_scores(GAME[1]))
 print(t_2-t)
-
-print(GAME[0].split('\n'))
-print()
-print(GAME[1].split('\n'))
