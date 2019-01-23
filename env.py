@@ -1,11 +1,13 @@
-from golf import Golf, Golf_Analyser
-import deck
-from player import Golf_Player, Random_Golf_Player, Greedy_Golf_Player
-import actions
-import numpy as np
-
 import time
 import os
+
+from golf import Golf, Golf_Analyser
+#import deck
+from player import Golf_Player, Random_Golf_Player, Greedy_Golf_Player
+#import actions
+#import numpy as np
+import file_write as fw
+
 
 g = Golf()
 
@@ -19,18 +21,20 @@ GAME = g.play_pair(p1, p2)
 
 t_2 = time.time()
 
-#test
-print(os.getcwd())
+#print(os.getcwd())
 
 
-#if not os.path.exists('games'):
-#    os.makedirs('games')
-    
-#with open(os.path.join('games','test_game_0.txt'), 'w+') as f:
-#    f.write(GAME[0])
+if not os.path.exists('games'):
+    os.makedirs('games')
 
-#with open(os.path.join('games','test_game_1.txt'), 'w+') as f:
-#    f.write(GAME[1])
+with open(os.path.join('games', 'test_game_0.txt'), 'w+') as f:
+    #f.write(GAME[0])
+    fw.write_game(None, None)
+
+with open(os.path.join('games', 'test_game_1.txt'), 'w+') as f:
+    #f.write(GAME[1])
+    fw.write_game(None, None)
+
 
 #print(GAME)
 print(Golf_Analyser.extract_scores(GAME[0]))
