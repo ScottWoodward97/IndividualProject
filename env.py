@@ -20,6 +20,7 @@ GAME = g.play_pair(p1, p2)
 t_2 = time.time()
 
 print(os.getcwd())
+#comment to test git saved credentials
 
 #if not os.path.exists('games'):
 #    os.makedirs('games')
