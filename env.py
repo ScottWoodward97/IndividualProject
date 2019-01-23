@@ -19,6 +19,7 @@ GAME = g.play_pair(p1, p2)
 
 t_2 = time.time()
 
+#test
 print(os.getcwd())
 
 
