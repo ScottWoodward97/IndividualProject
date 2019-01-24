@@ -19,6 +19,7 @@ class Golf():
 
     def initialise(self, stock=None):
         """
+        Initialises/Resets the  deck and discard pile.
         """
         self.discard_pile = []
         if stock is None:
@@ -263,25 +264,40 @@ class Golf():
 
 class Golf_Analyser():
     """
+    This is a class that can extract data from the encoded game history.
     """
 
     @staticmethod
     def extract_scores(game):
         """
+        Given the history of a game in the stored format, extract the final scores for the players.
+        That is, the total score across all nine rounds of the game.
+        It does so by iteritively extracting the scores from each round in game.
+        Args:
+            game (String): A string containing the history of a game, which is nine rounds separated by '\n' characters.
+        Returns: A list of the final (int) scores of each player.
         """
+        #Extract the number of players in the game
         SCORES = [0]*int(game[0])
         rounds = game.split('\n')[:-1]
         for r in rounds:
             SCORES = list(map(add, SCORES, Golf_Analyser.extract_scores_round(r)))
-
         return SCORES
 
 
     @classmethod
     def extract_scores_round(cls, game_round):
         """
+        Extracts the scores of each player from a single round 'game_round'
+        Args:
+            game_round (string): A string containing the history of a single round.
+        Returns: A list containing the scores of each player for this round.
         """
+        #Determine the number of players in the game, using that to determine the number of characters
+        # at the end of the string that represent the scores.
         num_players = int(game_round[0])
         str_scores = game_round[-2*num_players:]
+
+        #converts the characters into integer values
         int_scores = map(int, [str_scores[i:i+2] for i in range(0, len(str_scores), 2)])
         return list(int_scores)
