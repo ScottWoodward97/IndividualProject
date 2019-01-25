@@ -19,7 +19,11 @@ class Golf():
 
     def initialise(self, stock=None):
         """
-        Initialises/Resets the  deck and discard pile.
+        Initialises/Resets the deck and discard pile.
+        If a deck has been specified (via the stock argument) then a deep copy is made, else a new deck is created.
+        Args:
+            stock (Deck): The deck to initialise the game with, set to None by default.
+        Returns: None
         """
         self.discard_pile = []
         if stock is None:
@@ -29,6 +33,9 @@ class Golf():
 
     def init_hand(self):
         """
+        Creates and returns an empty object array of a fixed size (6,) to be the hand of a player.
+        The object array is an ndarray from the numpy module.
+        Returns: A numpy ndarray of size (6,) and dtype object.
         """
         return np.empty((6,), dtype=Deck.Card)
 
@@ -80,11 +87,21 @@ class Golf():
 
     def has_finished(self, player):
         """
+        Determines if a player has reached the end of the game by checking if all cards in their hand are not hidden.
+        Args:
+            player (Player): The player whose hand is being checked.
+        Returns: A boolean variable which is True if all cards in players hand are not hidden, False otherwise.
         """
+        #Can replace card.hidden == False with not card.hidden but the former is more descriptive
         return all([card.hidden == False for card in player.hand])
 
     def reveal_hand(self, player):
         """
+        Reveals all cards in a players hand by setting the hidden attributes to all cards to False.
+        This function does so in place.
+        Args:
+            player (Player): The player whose hand is being revealed.
+        Returns: None
         """
         for card in player.hand:
             card.hidden = False
@@ -92,6 +109,13 @@ class Golf():
     @staticmethod
     def get_card_index(card):
         """
+        Calculates the index of a given card in the game state array using the suit and value of the card.
+        For all non-joker cards, the index is calculated as (suit-1)*13 + value -1.
+        The two jokers in the deck have indexes of 52 and 53.
+        If the card is hidden then no index will be returned.
+        Args:
+            card (Deck.Card): The card whose index is being calculated.
+        Returns: The calculated index of card or None if the card is 'hidden' (hidden == True)
         """
         v, s = card.get_val_suit()
         if v == 0:
@@ -104,17 +128,35 @@ class Golf():
     @staticmethod
     def card_score(value):
         """
+        Calculates the score that a card (value) has.
+        This is used when scoring an entire player hand at the end of the game.
+        The scoring is as follows;
+            Ace (1) - 10            : 1 - 10
+            Jack (11), Queen (12)   : 10
+            King (13)               : 0
+            Joker (-1)              : -2
+        Args:
+            value (int): The value of the card in question
+        Returns: An int representing the score of the value.
         """
         return 0 if value == 13 else (10 if value > 10 else (-2 if value == -1 else value))
 
     @staticmethod
     def card_to_char(card):
         """
+        Converts a given card into a character for use in recording the game history.
+        The character is determined by adding the index of the card (via the get_card_index method) to 65,
+        allowing for all 54 cards to be represented by the characters [A-v] (ascii values 65-118).
+        If the card is hidden (hidden == True) then it is represented by the character '#'.
+        Args:
+            card (Deck.Card): The card whose character is to be calculated.
+        Returns: A char that unqiuely represents 'card'.
         """
         index = Golf.get_card_index(card)
         if index is None:
             char = '#'
         else:
+            #Converts the joker indexes to 52 and 53
             if index < 0:
                 index = 54 + index
             char = chr(65 + index)
@@ -122,6 +164,7 @@ class Golf():
 
     def score_hand(self, hand):
         """
+        Calculate the score of a given hand
         """
         score = 0
         for i in range(3):
