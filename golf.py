@@ -41,9 +41,25 @@ class Golf():
 
     def get_state(self, player, other_players):
         """
+        Converts the current game state into a list of (54) integers from the perspective of one player.
+        Each index in the list of integers uniquely represents a card in the deck, calculated by get_card_index.
+        Each position that a card can be in is represented by an integer value raning from [-3,5] where;
+        In Opponent's Hand  : -3
+        In Discard Pile     : -2
+        Unknown             : -1
+        In Player's Hand    : 0-5 (refers to the index of the card in the hand)
+        The function will iterate through all cards in known locations, including the discard pile and player hands,
+        updating their position in the list with the relevent integer value.
+        Args:
+            player (Player): The player whose perspective the state is being generated from.
+            other_players ([Player]): A list of the players in the game excluding 'player'.
+        Returns: A list of 54 integers representing the game state.
         """
-        #-3 IOH, -2 IDP, -1 UNK, 0-5 POSITION IN HAND
-        state = [-1]*54 #[Locations.UNKNOWN]*54
+        
+        #Initialise a state where all cards are unknown
+        state = [-1]*54 
+
+        #Iterate through cards in the discard pile
         for card in self.discard_pile:
             ind = self.get_card_index(card)
             if ind is not None:
@@ -54,6 +70,7 @@ class Golf():
             #else:
             #    state[ (s-1)*13 + v-1 ] = -2 #Locations.IN_DISC_PILE
 
+        #Iterate through cards in opposing player hands
         for p in other_players:
             for card in p.hand:
                 ind = self.get_card_index(card)
@@ -69,6 +86,7 @@ class Golf():
                 #else:
                 #    state[ (s-1)*13 + v-1 ] = -3 #Locations.IN_OPP_HAND
 
+        #Iterate through cards in the players hand
         for i in range(6):
             ind = self.get_card_index(player.hand[i])
             if ind is None:
@@ -164,11 +182,18 @@ class Golf():
 
     def score_hand(self, hand):
         """
-        Calculate the score of a given hand
+        Calculates the total score of a given hand.
+        The scoring is iterated over each column of the hand where each card 
+        is scored using the score_hand method and they are added to a running total.
+        If the values of the cards match, however, then their scores are not added to the total.
+        Args:
+            hand ([Deck.Card]): The hand of the player, a numpy ndarray.
+        Returns: An integer value representing the score of the hand.      
         """
         score = 0
         for i in range(3):
             card_1, card_2 = hand[i], hand[i+3]
+            #Only add to score if values do not match
             if card_1.get_val() != card_2.get_val():
                 score += self.card_score(card_1.get_val()) + self.card_score(card_2.get_val())
         return score
@@ -176,23 +201,17 @@ class Golf():
     def play(self, *players):
         """
         """
-        #Extract players
-        #PLAYERS = [player for player in players]
-        #SCORES = [0]*len(players)
 
         GAME = ""
 
         for r in range(9):
 
-            #Initialise game state  WONT WORK FOR PLAY SET
+            #Initialise game state 
             self.initialise()
-            #THIS METHOD NEEDS TO CHANGE
             g = self.play_round(r, *players)
             GAME += g + '\n'
-            #SCORES = [SCORES[i]+s[i] for i in range(len(players))]
 
-            ##End game
-        return GAME #SCORES
+        return GAME
 
     def play_round(self, round_num, *players):
         """
@@ -287,9 +306,13 @@ class Golf():
         PLAYERS = [player1, player2]
         num_players = 2 #len(PLAYERS)
         games = ["", ""]
+        np.random.seed(None)
+        seeds = np.random.randint(0, 2147483648, size=9)
 
         for r in range(9):
-            np_seed = int(time.time())
+            #Doesn't change enough
+            np_seed = seeds[r] #int(time.time())
+            print(np_seed)
             set_deck = Deck(deck=[], jokers=True)
             for g in range(num_players):
                 np.random.seed(np_seed)

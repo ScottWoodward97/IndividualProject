@@ -4,7 +4,7 @@ import random
 import math
 from golf import Golf
 from actions import Actions
-from brain import Random_Brain
+from brain import Random_Brain, Co_Evo_Brain
 from deck import Deck
 
 
