@@ -6,8 +6,8 @@ class Neural_Network():
         self.n_hidden = n_hidden
         self.n_output = n_output
 
-        self.W_hidden = np.zeros((n_input, n_hidden))
-        self.W_output = np.zeros((n_hidden, n_output))
+        self.W_hidden = np.zeros((n_input, n_hidden)) #Need to change to random values
+        self.W_output = np.zeros((n_hidden, n_output)) #Need to change to random values
 
     def _sigmoid(self, x):
         """
