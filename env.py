@@ -13,6 +13,7 @@ import file_write as fw
 g = Golf()
 
 #GOT STUCK IN AN INFINITE LOOP
+#LOOK AT PREVENTING A PLAYER DISCARDING CARD DRAWN FROM DISCARD PILE, although this should not be a problem???? Need to investigate player policy method.
 p1 = Golf_Player() #Greedy_Golf_Player() 
 p2 = Golf_Player() #Random_Golf_Player() 
 
