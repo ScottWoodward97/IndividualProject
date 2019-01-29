@@ -310,9 +310,9 @@ class Golf():
         seeds = np.random.randint(0, 2147483648, size=9)
 
         for r in range(9):
-            #Doesn't change enough
+
             np_seed = seeds[r] #int(time.time())
-            print(np_seed)
+
             set_deck = Deck(deck=[], jokers=True)
             for g in range(num_players):
                 np.random.seed(np_seed)

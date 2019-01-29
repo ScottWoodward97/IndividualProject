@@ -4,16 +4,16 @@ import random
 import math
 from golf import Golf
 from actions import Actions
-from brain import Random_Brain, Co_Evo_Brain
+from function_approximator import Random_Func_Approx, CoEvo_Func_Approx
 from deck import Deck
 
 
 class Player(ABC):
     """
     """
-    def __init__(self, brain):
+    def __init__(self, function_approximator):
         self.hand = [] ##Create a custom hand for the game
-        self.brain = brain ##Load in a brain
+        self.function_approximator = function_approximator ##Load in a function_approximator
 
 
     ##POLICIES
@@ -37,8 +37,8 @@ class Player(ABC):
 class Golf_Player(Player):
     """
     """
-    def __init__(self, brain=Random_Brain()):
-        super().__init__(brain)
+    def __init__(self, function_approximator=CoEvo_Func_Approx(54,27)):
+        super().__init__(function_approximator)
 
     def choose_draw(self, top_discard, game_state):
         """
@@ -69,7 +69,7 @@ class Golf_Player(Player):
         ##If known, also add discarded card to discard pile
 
         ##Should also compare all switches with an unswitched version of the hand.
-        max_val = self.brain.value_of_state(game_state)
+        max_val = self.function_approximator.value_of_state(game_state)
         v_d, s_d = drawn_card.get_val_suit()
 
         val, ind = self.max_val_ind_exchange(v_d, s_d, game_state)
@@ -93,7 +93,7 @@ class Golf_Player(Player):
                 ind = (s-1)*13 + v-1
                 temp_state[ind] = -2
 
-            val = self.brain.value_of_state(temp_state)
+            val = self.function_approximator.value_of_state(temp_state)
             if val > max_val:
                 max_val, index = val, i
 

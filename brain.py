@@ -1,3 +1,5 @@
+##DEPRECATED - REPLACING WITH FUNCTION_APPROXIMATOR.PY
+#Essentially just a refactor
 from abc import ABC, ABCMeta, abstractmethod
 import random
 from neural_net import Neural_Network
@@ -31,3 +33,6 @@ class Co_Evo_Brain(Brain):
 
     def update(self, opposing_net):
         self.network.coevo_update(opposing_net)
+
+    def add_noise(self):
+        self.add_noise()
