@@ -13,7 +13,10 @@ class Player(ABC):
     """
     def __init__(self, function_approximator):
         self.hand = [] ##Create a custom hand for the game
-        self.function_approximator = function_approximator ##Load in a function_approximator
+        if function_approximator is None:
+            self.function_approximator = CoEvo_Func_Approx(54*9,27)
+        else:
+            self.function_approximator = function_approximator ##Load in a function_approximator
 
 
     ##POLICIES
@@ -37,14 +40,14 @@ class Player(ABC):
 class Golf_Player(Player):
     """
     """
-    def __init__(self, function_approximator=CoEvo_Func_Approx(54,27)):
+    def __init__(self, function_approximator=None):
         super().__init__(function_approximator)
 
     def choose_draw(self, top_discard, game_state):
         """
         """
-        val, suit = top_discard.get_val_suit()
-        val_discard, _ = self.max_val_ind_exchange(val, suit, game_state)
+        #val, suit = top_discard.get_val_suit()
+        val_discard, _ = self.max_val_ind_exchange(Golf.get_card_index(top_discard), game_state)
 
         #Tallys if unknown exchange is over or less than or equal to val_discard
         over, leq = 0, 0
@@ -52,8 +55,8 @@ class Golf_Player(Player):
         #can change to a single variable, if + then over else if - then under
         for i in range(len(game_state)):
             if game_state[i] == -1: #Locations.UNKNOWN:
-                v, s = self.get_val_suit(i)
-                val, _ = self.max_val_ind_exchange(v, s, game_state)
+                #v, s = self.get_val_suit(i)
+                val, _ = self.max_val_ind_exchange(i, game_state)
                 if val > val_discard:
                     over += 1
                 else:
@@ -69,28 +72,39 @@ class Golf_Player(Player):
         ##If known, also add discarded card to discard pile
 
         ##Should also compare all switches with an unswitched version of the hand.
-        max_val = self.function_approximator.value_of_state(game_state)
-        v_d, s_d = drawn_card.get_val_suit()
 
-        val, ind = self.max_val_ind_exchange(v_d, s_d, game_state)
+        #Need to consider difference between card drawn from deck and discard, not let card drawn from discard be discarded.
+        #Check what position card was in?? If -2 then don't let discard, if -1 then allow??
+        
+        
+        #v_d, s_d = drawn_card.get_val_suit()
 
-        index = ind if val > max_val else 8
+        val, ind = self.max_val_ind_exchange(Golf.get_card_index(drawn_card), game_state)
+
+        #Prevent player from discarding card drawn from discard pile
+        if game_state[Golf.get_card_index(drawn_card)] == -2:
+            index = ind
+        else:
+            max_val = self.function_approximator.value_of_state(game_state)
+            index = ind if val > max_val else 8
 
         return Actions(index)
 
-    def max_val_ind_exchange(self, value, suit, game_state):
+    def max_val_ind_exchange(self, exchange_index, game_state):
         """
         """
         max_val, index = -math.inf, 0
-        ind_d = (suit-1)*13 + value-1
+        #ind_d = (suit-1)*13 + value-1 #Can replace with Golf method
 
         for i, card in enumerate(self.hand):
             temp_state = game_state[:]
-            temp_state[ind_d] = i
+            temp_state[exchange_index] = i
 
-            v, s = card.get_val_suit()
-            if v > 0:
-                ind = (s-1)*13 + v-1
+            #v, s = card.get_val_suit()
+            #if v > 0:
+            ind = Golf.get_card_index(card) #(s-1)*13 + v-1 #replace this too
+            #get_card_index returns None if card is hidden
+            if ind is not None:
                 temp_state[ind] = -2
 
             val = self.function_approximator.value_of_state(temp_state)
@@ -99,12 +113,13 @@ class Golf_Player(Player):
 
         return max_val, index
 
-    def get_val_suit(self, value):
+    def get_val_suit(self, index):
         """
+        DONT THINK THIS IS NEEDED HERE, MAYBE IN A METHOD TO MAKE DATA VERBOSE??
         """
-        suit = (value // 13) + 1 if value <= 51 else (-2 if value == 52 else -1)
+        suit = (index // 13) + 1 if index <= 51 else (-2 if index == 52 else -1)
 
-        val = (value - (suit-1)*13 + 1) if value >= 0 else -1
+        val = (index - (suit-1)*13 + 1) if index >= 0 else -1
 
         return (val, suit)
 
