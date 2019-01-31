@@ -21,7 +21,7 @@ counter = 0
 
 GAME = ["",""]
 t = time.time()
-for i in range(10):
+for i in range(1):
     game = g.play_pair(p1, p2)
     print(i)
     GAME = list(map(add, GAME, game))

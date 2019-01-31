@@ -123,6 +123,12 @@ class Golf_Player(Player):
 
         return (val, suit)
 
+    def update_network(self, opposing_player):
+        self.function_approximator.update(opposing_player.function_approximator)
+
+    def add_noise(self, mean=0.0, sd=0.1):
+        self.function_approximator.add_noise(mean, sd)
+
 class Random_Golf_Player(Player):
     """
     The Random_Golf_Player is a player that can play the game of golf
