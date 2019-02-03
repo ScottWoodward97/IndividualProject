@@ -114,7 +114,7 @@ while run:
 
     filename = time.strftime("%Y%m%d-%H%M%S-", time.gmtime())
     for i in range(2):
-        with open(os.path.join(DIR_PATH, '%s%d.txt' % (filename, i)), 'w+') as f:
+        with open(os.path.join(DIR_PATH, '%s%d.txt' % (filename, i)), 'w+') as f: #look at a+ instead, will append if the file exists
             f.write(GAMES[i])
 
     with open(os.path.join(DIR_PATH, 'PLAYER_PICKLE.p'), 'wb+') as f:
