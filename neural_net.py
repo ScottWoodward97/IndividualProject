@@ -28,20 +28,20 @@ class Neural_Network():
         return output
 
     #Dont know if this is something that should be in here
-    def coevo_update(self, network):
-        """
-        """
-        #W_new = (W_network - W_self)*0.05 + W_self
-        self.W_hidden = (network.W_hidden - self.W_hidden)*0.05 + self.W_hidden
-        self.W_output = (network.W_output - self.W_output)*0.05 + self.W_output
+    #def coevo_update(self, network):
+    #    """
+    #    """
+    #    #W_new = (W_network - W_self)*0.05 + W_self
+    #    self.W_hidden = (network.W_hidden - self.W_hidden)*0.05 + self.W_hidden
+    #    self.W_output = (network.W_output - self.W_output)*0.05 + self.W_output
 
-    def add_noise(self, mean=0.0, sd=0.1):
-        """
-        Adds Guassian noise to all weights in the network via the numpy.random.normal method.
-        Args:
-            mean (float): The centre of the distribution. Default set to 0.0.
-            sd (float): The standard deviation of the distribution. Default set to 0.1.
-        Returns: None
-        """
-        self.W_hidden += np.random.normal(mean, sd, (self.n_input, self.n_hidden))
-        self.W_output += np.random.normal(mean, sd, (self.n_hidden, self.n_output))
+    #def add_noise(self, mean=0.0, sd=0.1):
+    #    """
+    #    Adds Guassian noise to all weights in the network via the numpy.random.normal method.
+    #    Args:
+    #        mean (float): The centre of the distribution. Default set to 0.0.
+    #        sd (float): The standard deviation of the distribution. Default set to 0.1.
+    #    Returns: None
+    #    """
+    #    self.W_hidden += np.random.normal(mean, sd, (self.n_input, self.n_hidden))
+    #    self.W_output += np.random.normal(mean, sd, (self.n_hidden, self.n_output))

@@ -38,7 +38,6 @@ class CoEvo_Func_Approx(Func_Approx):
         self.network.W_hidden = (opposing_func_approx.network.W_hidden - self.network.W_hidden)*crossover + self.network.W_hidden
         self.network.W_output = (opposing_func_approx.network.W_output - self.network.W_output)*crossover + self.network.W_output
         
-        #self.network.coevo_update(opposing_func_approx.network)
 
     def add_noise(self, mean=0.0, sd=0.1):
         """
