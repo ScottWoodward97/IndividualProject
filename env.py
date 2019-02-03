@@ -12,6 +12,10 @@ import file_write as fw
 
 g = Golf()
 
+with open(os.path.join('games', 'test_game_2.txt'), 'rb') as f:
+    p = f.readline()
+
+"""
 #GOT STUCK IN AN INFINITE LOOP
 #LOOK AT PREVENTING A PLAYER DISCARDING CARD DRAWN FROM DISCARD PILE, although this should not be a problem???? Need to investigate player policy method.
 p1 = Golf_Player() #Greedy_Golf_Player() 
@@ -53,3 +57,4 @@ for g in range(2):
 #print(Golf_Analyser.extract_scores(GAME[0]))
 #print(Golf_Analyser.extract_scores(GAME[1]))
 print(t_2-t)
+"""

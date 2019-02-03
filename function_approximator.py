@@ -34,9 +34,9 @@ class CoEvo_Func_Approx(Func_Approx):
 
         return self.network.feedforward(np.reshape(one_hot_state, (1, len(one_hot_state))))[0][0]
 
-    def update(self, opposing_func_approx):
-        self.network.W_hidden = (opposing_func_approx.network.W_hidden - self.network.W_hidden)*0.05 + self.network.W_hidden
-        self.network.W_output = (opposing_func_approx.network.W_output - self.network.W_output)*0.05 + self.network.W_output
+    def update(self, opposing_func_approx, crossover=0.05):
+        self.network.W_hidden = (opposing_func_approx.network.W_hidden - self.network.W_hidden)*crossover + self.network.W_hidden
+        self.network.W_output = (opposing_func_approx.network.W_output - self.network.W_output)*crossover + self.network.W_output
         
         #self.network.coevo_update(opposing_func_approx.network)
 
