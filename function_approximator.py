@@ -1,5 +1,4 @@
-##DEPRECATED - REPLACING WITH FUNCTION_APPROXIMATOR.PY
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 import random
 from neural_net import Neural_Network
 import numpy as np
