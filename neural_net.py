@@ -8,7 +8,8 @@ class Neural_Network():
 
         #Randomly initialise weights of the network such that each weight is independently
         #drawn from a uniform distribution of [-1.0, 1.0).
-        self.W_hidden = np.random.uniform(-1.0, 1.0, (n_input, n_hidden)) #np.zeros((n_input, n_hidden)) 
+        #Adding one to the hidden weights to include hidden layer biases
+        self.W_hidden = np.random.uniform(-1.0, 1.0, (n_input+1, n_hidden)) #np.zeros((n_input, n_hidden)) 
         self.W_output = np.random.uniform(-1.0, 1.0, (n_hidden, n_output)) #np.zeros((n_hidden, n_output)) 
 
     def _sigmoid(self, x):
@@ -23,7 +24,9 @@ class Neural_Network():
     def feedforward(self, data_in):
         """
         """
-        hidden_out = self._sigmoid(np.dot(data_in, self.W_hidden))
+        #Add bias inputs (1) to the input data
+        inp = np.append(np.ones((data_in.shape[0], 1)), data_in, axis=1)
+        hidden_out = self._sigmoid(np.dot(inp, self.W_hidden))
         output = self._sigmoid(np.dot(hidden_out, self.W_output)) #might not want this 'sigmoided'
         return output
 
