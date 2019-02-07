@@ -276,6 +276,10 @@ class Golf():
                 GAME_HISTORY += str(discard_action.value) + self.card_to_char(disc_card)                         #convert discarded card here, might need refactoring to make it nicer
 
             turn = turn + 1 if turn + 1 < len(PLAYERS) else 0
+            
+            #Check for cycles in the game using String.count(substring, start, end)
+            if GAME_HISTORY.count(GAME_HISTORY[-4:]) > 5:
+                break
 
             #Recycle stock if empty
             if self.stock.is_empty():
@@ -380,8 +384,12 @@ class Golf_Analyser():
 
         plt.xlabel("Games played")
         plt.ylabel(ylabel)
-        plt.plot(x_axis, np_data[:, 0], 'b-', label="Player")
+        plt.title("%s of Player and Opponent" % ylabel)
+
         plt.plot(x_axis, np_data[:, 1], 'r-', label="Opponent")
+        plt.plot(x_axis, np_data[:, 0], 'b-', label="Player")
+
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.show()
 
     @staticmethod

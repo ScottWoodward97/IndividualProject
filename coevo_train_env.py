@@ -39,11 +39,11 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo', 'test')
+DIR_PATH = os.path.join('games', 'coevo', 'test_2')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
 
-BATCH_SIZE = 10
+BATCH_SIZE = 25
 
 #Search directory for player and opponent back-up files. Load if exist, create new if don't 
 try:
@@ -72,7 +72,7 @@ except FileNotFoundError:
 g = Golf()
 
 
-#t_1 = time.time()
+t_1 = time.time()
 
 ##LOOP SETUP##
 run = True
@@ -126,8 +126,8 @@ while run:
 
 ##END LOOP##
 
-#t_2 = time.time()
-#print(t_2 - t_1)
+t_2 = time.time()
+print(t_2 - t_1)
 
 #argc = len(sys.argv) 
 #if argc < 3:
