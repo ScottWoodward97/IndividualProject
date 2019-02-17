@@ -14,7 +14,7 @@ class Player(ABC):
     def __init__(self, function_approximator):
         self.hand = [] ##Create a custom hand for the game
         if function_approximator is None:
-            self.function_approximator = CoEvo_Func_Approx(54*9,27)
+            self.function_approximator = CoEvo_Func_Approx(9*54,27)
         else:
             self.function_approximator = function_approximator ##Load in a function_approximator
 

@@ -376,13 +376,13 @@ class Golf_Analyser():
         return list(int_scores)
 
     @staticmethod
-    def plot_data(data, ylabel): #Maybe add file directory to save graph?
+    def plot_data(data, ylabel, xlabel="Games Played"): #Maybe add file directory to save graph?
         np_data = np.array(data)
         print(np_data.shape)
 
         x_axis = np.linspace(1, len(data), len(data), dtype=int)
 
-        plt.xlabel("Games played")
+        plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title("%s of Player and Opponent" % ylabel)
 
@@ -397,22 +397,6 @@ class Golf_Analyser():
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
-        #While files are being read in chronological order, the games are not as file '*-0.txt' and '*-1.txt' are played in parallel.
-        #Need to store data in a way that allows for the games to be stored in chronological order.
-        #for file in files:
-        #    player_pos = int(file.split(".txt")[0][-1])
-        #    with open(file, 'r') as f:
-        #        games = f.read().split('\n\n')[:-1]
-        #    for game in games:
-        #        #print(game)
-        #        score = Golf_Analyser.extract_scores(game+'\n')
-        #        if player_pos == 1:
-        #            score = score[::-1]
-        #        data.append(score)
-        #    #print(np.array(data))
-        #Golf_Analyser.plot_data(data, "Scores")
-
-        #data=[]
         #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
         pair_files = np.reshape(files, (len(files)//2, 2))
         for pair in pair_files:
@@ -432,3 +416,34 @@ class Golf_Analyser():
             data += scores
         
         Golf_Analyser.plot_data(data, "Scores")
+
+    @staticmethod
+    def plot_win_loss(dir_path):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data = []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            scores_0, scores_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
+
+            scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
+
+            
+            for i in range(len(scores)//6):
+                epoch = scores[i*6:(i+1)*6]
+                results = [a-b for a,b in epoch]
+                win_loss = [sum(r < 0 for r in results)/6, sum(r > 0 for r in results)/6]
+                data.append(win_loss)
+        print(np.array(data).shape)
+        Golf_Analyser.plot_data(data, "Win-Loss %", "Epochs")

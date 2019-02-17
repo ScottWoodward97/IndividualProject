@@ -39,11 +39,12 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo', 'test_2')
+DIR_PATH = os.path.join('games', 'coevo', 'test_10')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
 
 BATCH_SIZE = 25
+NUM_PAIRS = 5
 
 #Search directory for player and opponent back-up files. Load if exist, create new if don't 
 try:
@@ -87,7 +88,7 @@ while run:
     GAMES = ["",""]
     for _ in range(BATCH_SIZE):
         player_wins = 0
-        for _ in range(2):
+        for _ in range(NUM_PAIRS):
             game_1, game_2 = g.play_pair(player, opponent)
             scores_1 = Golf_Analyser.extract_scores(game_1)
             if scores_1[0] < scores_1[1]:
@@ -105,9 +106,9 @@ while run:
 
         print()
 
-        if player_wins <= 2:
+        if player_wins <= (NUM_PAIRS-1)*2:
             player.update_network(opponent)
-
+        
         opponent.add_noise()
 
     print("Writing to file")
