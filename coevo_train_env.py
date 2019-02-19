@@ -1,29 +1,10 @@
-"""
-PSUEDO
-SYS.ARGS: file location to save games to, loction of player pickled files
-
-Try to load in players from file
-If not possible, create them from new
-
-loop until termination, either time based or number of batches made
-    
-    loop batch_size number of times
-        play game
-        add results to variable
-        update the players function approximators
-    write the game results to file
-    back-up the players to file (or func approx)
-    
-    determine if user has entered terminating phrase, exit if so
-
-"""
-
 import time
 import pickle
 import os
 import sys
 import queue
 import threading
+import copy
 from operator import add
 
 from golf import Golf, Golf_Analyser
@@ -39,7 +20,7 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo', 'test_10')
+DIR_PATH = os.path.join('games', 'coevo', 'test_12')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
 
@@ -108,8 +89,26 @@ while run:
 
         if player_wins <= (NUM_PAIRS-1)*2:
             player.update_network(opponent)
-        
         opponent.add_noise()
+
+        #if player_wins <= 0.1*NUM_PAIRS*2:
+        #    player = copy.deepcopy(opponent)
+        #    player.add_noise() 
+
+        #elif player_wins <= 0.3*NUM_PAIRS*2:
+        #    player.update_network(opponent)
+
+        #elif player_wins <= 0.6*NUM_PAIRS*2:
+        #    player.add_noise()
+        #    opponent.add_noise()
+
+        #elif player_wins <= 0.8*NUM_PAIRS*2:
+        #    opponent.update_network(player)
+
+        #else:
+        #    opponent = copy.deepcopy(player)
+        #    opponent.add_noise()
+
 
     print("Writing to file")
 
