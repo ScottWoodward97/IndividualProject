@@ -4,7 +4,7 @@ import random
 import math
 from golf import Golf
 from actions import Actions
-from function_approximator import Random_Func_Approx, CoEvo_Func_Approx
+from function_approximator import CoEvo_Func_Approx
 from deck import Deck
 
 
@@ -14,7 +14,7 @@ class Player(ABC):
     def __init__(self, function_approximator):
         self.hand = [] ##Create a custom hand for the game
         if function_approximator is None:
-            self.function_approximator = CoEvo_Func_Approx(9*54,27)
+            self.function_approximator = CoEvo_Func_Approx(6*15,27)
         else:
             self.function_approximator = function_approximator ##Load in a function_approximator
 
@@ -48,6 +48,10 @@ class Golf_Player(Player):
         """
         #val, suit = top_discard.get_val_suit()
         val_discard, _ = self.max_val_ind_exchange(Golf.get_card_index(top_discard), game_state)
+
+        val_current = self.function_approximator.value_of_state(game_state)
+        if val_current > val_discard:
+            return Actions.DRAW_DECK
 
         #Tallys if unknown exchange is over or less than or equal to val_discard
         over, leq = 0, 0
