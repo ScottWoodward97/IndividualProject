@@ -6,6 +6,7 @@ import queue
 import threading
 import copy
 from operator import add
+import numpy as np
 
 from golf import Golf, Golf_Analyser
 from player import Golf_Player
@@ -20,12 +21,13 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo', 'test_12')
+DIR_PATH = os.path.join('games', 'coevo_score', 'test_11')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
 
 BATCH_SIZE = 25
 NUM_PAIRS = 5
+POINTS_THRESHOLD = 15*NUM_PAIRS*2
 
 #Search directory for player and opponent back-up files. Load if exist, create new if don't 
 try:
@@ -48,6 +50,7 @@ try:
 
 except FileNotFoundError:
     opponent = Golf_Player()
+    opponent.add_noise()
 
     print("Creating opponent")
 
@@ -68,28 +71,49 @@ input_thread.start()
 while run:
     GAMES = ["",""]
     for _ in range(BATCH_SIZE):
-        player_wins = 0
+        #player_wins = 0
+        scores = []
         for _ in range(NUM_PAIRS):
             game_1, game_2 = g.play_pair(player, opponent)
             scores_1 = Golf_Analyser.extract_scores(game_1)
-            if scores_1[0] < scores_1[1]:
-                player_wins += 1
+            #if scores_1[0] < scores_1[1]:
+            #    player_wins += 1
             scores_2 = Golf_Analyser.extract_scores(game_2)
-            if scores_2[1] < scores_2[0]:
-                player_wins += 1
+            #if scores_2[1] < scores_2[0]:
+            #    player_wins += 1
         
             print(scores_1)
             print(scores_2[::-1])
+            scores.append(scores_1)
+            scores.append(scores_2[::-1])
 
             GAMES = list(map(add, GAMES, [game_1, game_2]))
             GAMES[0]+='\n'
             GAMES[1]+='\n'
 
         print()
-
-        if player_wins <= (NUM_PAIRS-1)*2:
+        total_scores = np.sum(scores, axis=0)
+        
+        if total_scores[0] < total_scores[1] - 2*POINTS_THRESHOLD:
+            opponent = copy.deepcopy(player)
+            opponent.add_noise()
+        elif total_scores[0] < total_scores[1] - POINTS_THRESHOLD:
+            opponent.update_network(player)
+        elif total_scores[0] > total_scores[1] + 2*POINTS_THRESHOLD:
+            player = copy.deepcopy(opponent)
+            player.add_noise()
+        elif total_scores[0] > total_scores[1] + POINTS_THRESHOLD:
             player.update_network(opponent)
-        opponent.add_noise()
+        else:
+            pass
+        
+        #if total_scores[0] >= total_scores[1] - POINTS_THRESHOLD:
+        #    player.update_network(opponent)
+        #opponent.add_noise()
+
+        #if player_wins <= (NUM_PAIRS-1)*2:
+        #    player.update_network(opponent)
+        #opponent.add_noise()
 
         #if player_wins <= 0.1*NUM_PAIRS*2:
         #    player = copy.deepcopy(opponent)
