@@ -3,38 +3,38 @@ import os
 from operator import add
 
 from golf import Golf, Golf_Analyser
-#import deck
 from player import Golf_Player, Random_Golf_Player, Greedy_Golf_Player
-#import actions
-#import numpy as np
 import file_write as fw
+import pickle
 
 
 g = Golf()
 
-with open(os.path.join('games', 'test_game_2.txt'), 'rb') as f:
-    p = f.readline()
+#DIR_PATH_PLAYERS = os.path.join('games', 'coevo', 'test_3')
+DIR_PATH_SAVE = os.path.join('games', 'analysis', 'random')
 
-"""
-#GOT STUCK IN AN INFINITE LOOP
-#LOOK AT PREVENTING A PLAYER DISCARDING CARD DRAWN FROM DISCARD PILE, although this should not be a problem???? Need to investigate player policy method.
-p1 = Golf_Player() #Greedy_Golf_Player() 
-p2 = Golf_Player() #Random_Golf_Player() 
+if not os.path.exists(DIR_PATH_SAVE):
+    os.makedirs(DIR_PATH_SAVE)
 
-counter = 0
+#with open(os.path.join(DIR_PATH_PLAYERS, 'PLAYER_PICKLE.p'), 'rb') as f:
+#    p1 = pickle.load(f)
+#with open(os.path.join(DIR_PATH_PLAYERS, 'OPPONENT_PICKLE.p'), 'rb') as f:
+#    p2 = pickle.load(f)
+p1 = Random_Golf_Player()
+p2 = Random_Golf_Player()
+
+
 
 GAME = ["",""]
 t = time.time()
-for i in range(1):
+for _ in range(10000):
     game = g.play_pair(p1, p2)
-    print(i)
+
     GAME = list(map(add, GAME, game))
     GAME[0]+='\n'
     GAME[1]+='\n' 
 
 
-#GAME = [g.play_pair(p1, p2)]
-#GAME += [g.play_pair(p1, p2)]
 
 t_2 = time.time()
 
@@ -44,7 +44,7 @@ t_2 = time.time()
 #    os.makedirs('games')
 
 for g in range(2):
-    with open(os.path.join('games', 'test_game_%d.txt'%g), 'w+') as f:
+    with open(os.path.join(DIR_PATH_SAVE, 'test_game_%d.txt'%g), 'w+') as f:
         f.write("".join(GAME[g]))
 #    fw.write_game(None, None)
 
@@ -57,4 +57,3 @@ for g in range(2):
 #print(Golf_Analyser.extract_scores(GAME[0]))
 #print(Golf_Analyser.extract_scores(GAME[1]))
 print(t_2-t)
-"""
