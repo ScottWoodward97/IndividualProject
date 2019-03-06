@@ -7,6 +7,7 @@ import os
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+from operator import add
 
 from deck import Deck
 from actions import Actions
@@ -357,6 +358,30 @@ class Golf_Analyser():
             SCORES = list(map(add, SCORES, Golf_Analyser.extract_scores_round(r)))
         return SCORES
 
+    @staticmethod
+    def extract_hands(game):
+        hands = []
+        rounds = game.split('\n')[:-1]
+        for r in rounds:
+            hands.append(Golf_Analyser.extract_hands_round(r))
+        return hands
+
+    @staticmethod
+    def extract_number_of_turns(game):
+        turns = []
+        rounds = game.split('\n')[:-1]
+        for r in rounds:
+            turns.append(Golf_Analyser.extract_number_of_turns_round(r))
+        return turns
+
+    @staticmethod
+    def extract_rounds_ended(game):
+        total = []
+        rounds = game.split('\n')[:-1]
+        for r in rounds:
+            total.append(Golf_Analyser.extract_round_ended(r))
+        return [list(np.sum(total, axis=0))]
+        
 
     @classmethod
     def extract_scores_round(cls, game_round):
@@ -375,8 +400,31 @@ class Golf_Analyser():
         int_scores = map(int, [str_scores[i:i+2] for i in range(0, len(str_scores), 2)])
         return list(int_scores)
 
+    @classmethod
+    def extract_hands_round(cls, game_round):
+        num_players = int(game_round[0])
+        concat_hands = game_round.split('>')[1][3:-2*num_players]
+        hands = [concat_hands[i*6:(i+1)*6] for i in range(num_players)]
+        return hands
+
+    @classmethod
+    def extract_number_of_turns_round(cls, game_round):
+        #num_players = int(game_round[0])
+        turns = game_round.split('<')[1].split('>')[0]
+        return len(turns)//4
+
+    @classmethod
+    def extract_round_ended(cls, game_round):
+        num_players = int(game_round[0])
+        info = list(map(int, game_round.split('>')[1][0:(num_players + 1)]))
+        tally = [0]*(num_players + 1)
+        ind = info[0] if info[info[0]+1] == 0 else -1
+        tally[ind] = 1
+        return tally
+
+
     @staticmethod
-    def plot_data(data, ylabel, xlabel="Games Played"): #Maybe add file directory to save graph?
+    def plot_data(data, num_columns, xlabel, ylabel, title, *data_labels): #Maybe add file directory to save graph?
         np_data = np.array(data)
         print(np_data.shape)
 
@@ -384,10 +432,11 @@ class Golf_Analyser():
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.title("%s of Player and Opponent" % ylabel)
-
-        plt.plot(x_axis, np_data[:, 1], 'r-', label="Opponent")
-        plt.plot(x_axis, np_data[:, 0], 'b-', label="Player")
+        plt.title(title)
+        
+        colours = 'brgmck'
+        for i in range(num_columns, 0, -1):
+            plt.plot(x_axis, np_data[:, i-1], '%c-' % colours[(i-1)%len(colours)], label=data_labels[i-1])
 
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.show()
@@ -415,10 +464,36 @@ class Golf_Analyser():
             scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
             data += scores
         
-        Golf_Analyser.plot_data(data, "Scores")
+        Golf_Analyser.plot_data(data, 2, "Games", "Score", "Scores per game", "Player", "Opponent")
 
     @staticmethod
-    def plot_win_loss(dir_path):
+    def plot_mean_scores(dir_path, games_per_epoch=10):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data = []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            scores_0, scores_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
+
+            scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
+            for i in range(len(scores)//games_per_epoch):
+                data.append(np.mean(scores[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
+        
+        Golf_Analyser.plot_data(data, 2, "Epochs", "Mean Score", "Mean scores per game across Epochs", "Player", "Opponent")
+
+    @staticmethod ##LOOK AT CHANGING
+    def plot_win_loss(dir_path, games_per_epoch=10):
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -440,10 +515,195 @@ class Golf_Analyser():
             scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
 
             
-            for i in range(len(scores)//6):
-                epoch = scores[i*6:(i+1)*6]
+            for i in range(len(scores)//games_per_epoch):
+                epoch = scores[i*games_per_epoch:(i+1)*games_per_epoch]
                 results = [a-b for a,b in epoch]
-                win_loss = [sum(r < 0 for r in results)/6, sum(r > 0 for r in results)/6]
+                win_loss = [sum(r < 0 for r in results)/games_per_epoch, sum(r > 0 for r in results)/games_per_epoch]
                 data.append(win_loss)
         print(np.array(data).shape)
         Golf_Analyser.plot_data(data, "Win-Loss %", "Epochs")
+
+    @staticmethod
+    def plot_number_matching(dir_path, games_per_epoch=10):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data = []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            hands_0, hands_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                hands_0 += Golf_Analyser.extract_hands(game + '\n')
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                tmp_hands = Golf_Analyser.extract_hands(game + '\n')
+                hands_1 += [h[::-1] for h in tmp_hands]
+
+            hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
+            matches = []
+            for hand_pair in hands:
+                #print(hand_pair)
+                #print(hand_pair[0])
+                asc_vals_player = [ord(card) for card in hand_pair[0]]
+                player_matches = sum((asc_vals_player[i] > 116 and asc_vals_player[i+3] > 116) 
+                                    or (asc_vals_player[i] < 117 and asc_vals_player[i+3] < 117 and (asc_vals_player[i] - asc_vals_player[i+3])%13==0) for i in range(3))
+                
+                asc_vals_opponent = [ord(card) for card in hand_pair[1]]
+                opponent_matches = sum((asc_vals_opponent[i] > 116 and asc_vals_opponent[i+3] > 116) 
+                                    or (asc_vals_opponent[i] < 117 and asc_vals_opponent[i+3] < 117 and (asc_vals_opponent[i] - asc_vals_opponent[i+3])%13==0) for i in range(3))
+                matches.append([player_matches, opponent_matches])
+            for i in range(len(matches)//(9*games_per_epoch)):
+                data.append(np.sum(matches[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
+
+        Golf_Analyser.plot_data(data, 2, "Epochs", "Number of Matches", "Number of Matches per game across Epochs", "Player", "Opponent")
+
+    @staticmethod
+    def plot_number_of_turns(dir_path, games_per_epoch=10):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data = []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            turns_0, turns_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                turns_0 += Golf_Analyser.extract_number_of_turns(game + '\n')
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                turns_1 += Golf_Analyser.extract_number_of_turns(game + '\n')
+
+            turns = [t for t in itertools.chain.from_iterable(zip(turns_0, turns_1))]
+            
+            for i in range(len(turns)//(9*games_per_epoch)):
+                data.append(np.mean(turns[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
+
+        Golf_Analyser.plot_data(np.reshape(data, (len(data), 1)), 1, "Epochs", "Average Number of Turns", "Average Number of Turns per round per Epochs", "Total number of turns")
+
+    @staticmethod
+    def plot_rounds_ended(dir_path, games_per_epoch=10):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data = []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            end_0, end_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                end_0 += Golf_Analyser.extract_rounds_ended(game + '\n')
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                tmp_ends = Golf_Analyser.extract_rounds_ended(game + '\n')[0]
+                end_1 += [tmp_ends[:-1][::-1] + tmp_ends[-1:]]
+
+            ended = [e for e in itertools.chain.from_iterable(zip(end_0, end_1))]
+            
+            for i in range(len(ended)//games_per_epoch):
+                data.append(np.sum(ended[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
+
+        #Golf_Analyser.plot_data(data, 3, "Epochs", "Rounds Ended", "Number of rounds ended per Epochs", "Player", "Opponent", "Ended due to loop")
+        np_data = np.array(data)
+        print(np_data.shape)
+
+        x_axis = np.linspace(1, len(data), len(data), dtype=int)
+
+        plt.xlabel("Epochs")
+        plt.ylabel("Rounds Ended")
+        plt.title("Number of rounds ended per Epochs")
+        
+        plt.bar(x_axis, np_data[:, 0], width=1.0, color='b' , label="Player")
+        plt.bar(x_axis, np_data[:, 1], width=1.0, bottom=np_data[:, 0], color='r' , label="Opponent")
+        plt.bar(x_axis, np_data[:, 2], width=1.0, bottom=np_data[:, 0] + np_data[:, 1], color='g' , label="Ended due to loop")
+    
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.show()
+
+    @staticmethod
+    def plot_card_popularity(dir_path, games_per_epoch=10):
+        files = glob.glob('%s/*.txt' % dir_path)
+        data_0, data_1 = [], []
+
+        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
+        pair_files = np.reshape(files, (len(files)//2, 2))
+        for pair in pair_files:
+            hands_0, hands_1 = [],[]
+            
+            with open(pair[0], 'r') as f0:
+                games_0 = f0.read().split('\n\n')[:-1]
+            for game in games_0:
+                hands_0 += Golf_Analyser.extract_hands(game + '\n')
+            
+            with open(pair[1], 'r') as f1:
+                games_1 = f1.read().split('\n\n')[:-1]
+            for game in games_1:
+                tmp_hands = Golf_Analyser.extract_hands(game + '\n')
+                hands_1 += [h[::-1] for h in tmp_hands]
+
+            hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
+
+            hands = np.array(hands)
+            val = lambda c: (ord(c)-65) - ((ord(c)-65)//13)*13 +1 if ord(c) -65 < 52 else -1
+            for i in range(len(hands)//(9*games_per_epoch)):
+                tally_0, tally_1 = [0]*14, [0]*14
+                h_0, h_1 = hands[:,0], hands[:,1]
+                for h in h_0[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
+                    values = list(map(val, h))
+                    for v in values:
+                        if v >0:
+                            tally_0[v-1] += 1
+                        else:
+                            tally_0[v] += 1
+                data_0.append(tally_0)
+                for h in h_1[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
+                    values = list(map(val, h))
+                    for v in values:
+                        if v >0:
+                            tally_1[v-1] += 1
+                        else:
+                            tally_1[v] += 1
+                data_1.append(tally_1)
+
+        np_data_0, np_data_1 = np.array(data_0), np.array(data_1)
+        print(np_data_0.shape)
+
+        x_axis = np.linspace(1, len(data_0), len(data_0), dtype=int)
+
+        fig, (ax_0, ax_1) = plt.subplots(nrows=2)
+
+        colors = ['red', 'blue', 'green', 'magenta', 'orange', 'cyan', 'purple', 'grey', 'lime', 'yellow', 'black', 'salmon', 'teal', 'navy']
+        labels = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Joker']
+
+        for i in range(14):
+            ax_0.bar(x_axis, np_data_0[:,i], width=1.0, bottom=np.sum(np_data_0[:,:i], axis=1), color=colors[i], label=labels[i])
+            ax_1.bar(x_axis, np_data_1[:,i], width=1.0, bottom=np.sum(np_data_1[:,:i], axis=1), color=colors[i], label=labels[i])
+      
+        ax_0.set_xlabel("Epochs")
+        ax_0.set_ylabel("Number of times cards in hand")
+        ax_0.set_title("Popularity of cards per Epochs for Player")
+        ax_0.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        ax_1.set_xlabel("Epochs")
+        ax_1.set_ylabel("Number of times cards in hand")
+        ax_1.set_title("Popularity of cards per Epochs for Opponent")
+        ax_1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        fig.subplots_adjust(hspace=0.3)
+        plt.show()
+
+
+
+
+            
