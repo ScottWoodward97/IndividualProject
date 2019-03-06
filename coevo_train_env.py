@@ -9,7 +9,8 @@ from operator import add
 import numpy as np
 
 from golf import Golf, Golf_Analyser
-from player import Golf_Player
+from player import Golf_Player, Random_Golf_Player
+import function_approximator as fa
 
 def check_exit(input_queue):
     while True:
@@ -21,9 +22,14 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo_score', 'test_11')
+DIR_PATH = os.path.join('games', 'coevo_score_with_random', 'one_hot_state_and_hand_4')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
+
+if not os.path.exists(os.path.join(DIR_PATH, "training")):
+    os.makedirs(os.path.join(DIR_PATH, "training"))
+if not os.path.exists(os.path.join(DIR_PATH, "random")):
+    os.makedirs(os.path.join(DIR_PATH, "random"))
 
 BATCH_SIZE = 25
 NUM_PAIRS = 5
@@ -40,7 +46,7 @@ except FileNotFoundError:
 
     print("Creating player")
 
-    player = Golf_Player()
+    player = Golf_Player(fa.one_hot_state_and_hand)
 
 try:
     with open(os.path.join(DIR_PATH, 'OPPONENT_PICKLE.p'), 'rb') as f:
@@ -49,13 +55,14 @@ try:
         print("Loading opponent")
 
 except FileNotFoundError:
-    opponent = Golf_Player()
+    opponent = Golf_Player(fa.one_hot_state_and_hand)
     opponent.add_noise()
 
     print("Creating opponent")
 
 g = Golf()
 
+random_player = Random_Golf_Player()
 
 t_1 = time.time()
 
@@ -70,20 +77,24 @@ input_thread.start()
 ##LOOP##
 while run:
     GAMES = ["",""]
+    RANDOM_GAMES = ["",""]
     for _ in range(BATCH_SIZE):
-        #player_wins = 0
+        
+        for _ in range(NUM_PAIRS):
+            game_1, game_2 = g.play_pair(player, random_player)
+            RANDOM_GAMES = list(map(add, RANDOM_GAMES, [game_1, game_2]))
+            RANDOM_GAMES[0]+='\n'
+            RANDOM_GAMES[1]+='\n'
+        
         scores = []
         for _ in range(NUM_PAIRS):
             game_1, game_2 = g.play_pair(player, opponent)
             scores_1 = Golf_Analyser.extract_scores(game_1)
-            #if scores_1[0] < scores_1[1]:
-            #    player_wins += 1
             scores_2 = Golf_Analyser.extract_scores(game_2)
-            #if scores_2[1] < scores_2[0]:
-            #    player_wins += 1
         
             print(scores_1)
             print(scores_2[::-1])
+
             scores.append(scores_1)
             scores.append(scores_2[::-1])
 
@@ -92,8 +103,8 @@ while run:
             GAMES[1]+='\n'
 
         print()
-        total_scores = np.sum(scores, axis=0)
         
+        total_scores = np.sum(scores, axis=0)
         if total_scores[0] < total_scores[1] - 2*POINTS_THRESHOLD:
             opponent = copy.deepcopy(player)
             opponent.add_noise()
@@ -105,41 +116,17 @@ while run:
         elif total_scores[0] > total_scores[1] + POINTS_THRESHOLD:
             player.update_network(opponent)
         else:
-            pass
-        
-        #if total_scores[0] >= total_scores[1] - POINTS_THRESHOLD:
-        #    player.update_network(opponent)
-        #opponent.add_noise()
-
-        #if player_wins <= (NUM_PAIRS-1)*2:
-        #    player.update_network(opponent)
-        #opponent.add_noise()
-
-        #if player_wins <= 0.1*NUM_PAIRS*2:
-        #    player = copy.deepcopy(opponent)
-        #    player.add_noise() 
-
-        #elif player_wins <= 0.3*NUM_PAIRS*2:
-        #    player.update_network(opponent)
-
-        #elif player_wins <= 0.6*NUM_PAIRS*2:
-        #    player.add_noise()
-        #    opponent.add_noise()
-
-        #elif player_wins <= 0.8*NUM_PAIRS*2:
-        #    opponent.update_network(player)
-
-        #else:
-        #    opponent = copy.deepcopy(player)
-        #    opponent.add_noise()
+            opponent.add_noise()
 
 
     print("Writing to file")
 
     filename = time.strftime("%Y%m%d-%H%M%S-", time.gmtime())
     for i in range(2):
-        with open(os.path.join(DIR_PATH, '%s%d.txt' % (filename, i)), 'w+') as f: #look at a+ instead, will append if the file exists
+        with open(os.path.join(DIR_PATH, "training", '%s%d.txt' % (filename, i)), 'w+') as f: #look at a+ instead, will append if the file exists
             f.write(GAMES[i])
+        with open(os.path.join(DIR_PATH, "random", '%s%d.txt' % (filename, i)), 'w+') as f: #look at a+ instead, will append if the file exists
+            f.write(RANDOM_GAMES[i])
 
     with open(os.path.join(DIR_PATH, 'PLAYER_PICKLE.p'), 'wb+') as f:
         pickle.dump(player, f)

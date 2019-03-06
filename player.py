@@ -11,10 +11,11 @@ from deck import Deck
 class Player(ABC):
     """
     """
-    def __init__(self, function_approximator):
+    def __init__(self, state_function, function_approximator):
         self.hand = [] ##Create a custom hand for the game
+        #self.state_function = state_function
         if function_approximator is None:
-            self.function_approximator = CoEvo_Func_Approx(6*15,27)
+            self.function_approximator = CoEvo_Func_Approx(27, state_function)
         else:
             self.function_approximator = function_approximator ##Load in a function_approximator
 
@@ -40,8 +41,8 @@ class Player(ABC):
 class Golf_Player(Player):
     """
     """
-    def __init__(self, function_approximator=None):
-        super().__init__(function_approximator)
+    def __init__(self, state_function, function_approximator=None):
+        super().__init__(state_function, function_approximator)
 
     def choose_draw(self, top_discard, game_state):
         """
@@ -139,7 +140,7 @@ class Random_Golf_Player(Player):
     but all decisions, draw and discard, are made randomly with equal probability.
     """
     def __init__(self):
-        super().__init__(None)
+        super().__init__([], [])
 
     def choose_draw(self, top_discard, game_state):
         """
@@ -167,7 +168,7 @@ class Random_Golf_Player(Player):
 
 class Greedy_Golf_Player(Player):
     def __init__(self):
-        super().__init__(None)
+        super().__init__([], [])
 
     def choose_draw(self, top_discard, game_state):
         """

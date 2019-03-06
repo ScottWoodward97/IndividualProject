@@ -6,17 +6,20 @@ import neat
 
 class Func_Approx(ABC):
 
-    def __init__(self, network=None):
+    def __init__(self, state_function, network=None):
+        self.state_function = state_function
         self.network = network
+
 
     @abstractmethod
     def value_of_state(self, state):
         pass
 
 class CoEvo_Func_Approx(Func_Approx):
-    def __init__(self, n_input, n_hidden):
+    def __init__(self, n_hidden, state_function):
+        n_input = len(state_function([0]*54))
         network = Neural_Network(n_input, n_hidden, 1)
-        super().__init__(network)
+        super().__init__(state_function, network)
 
     def update(self, opposing_func_approx, crossover=0.05):
         self.network.W_hidden = (opposing_func_approx.network.W_hidden - self.network.W_hidden)*crossover + self.network.W_hidden
@@ -35,7 +38,7 @@ class CoEvo_Func_Approx(Func_Approx):
         #input_state = np.reshape([1 if s>=0 else s for s in state], (1, len(state))) + 1
         #return self.network.feedforward(input_state)[0][0]
 
-        #opp, dis, unk, hand = [0]*54, [0]*54, [0]*54, [0]*(6*14)
+        #opp, dis, unk, hand = [0]*54, [0]*54, [0]*54, [0]*(6*15)
         #for i in range(len(state)):
         #    if state[i] == -3:
         #        opp[i] = 1
@@ -43,28 +46,35 @@ class CoEvo_Func_Approx(Func_Approx):
         #        dis[i] = 1
         #    elif state[i] == -1:
         #        unk[i] = 1
-        #    else:
-        #        if i <= 51:
-        #            s = (i//13) +1
-        #            v = i + 1 - (s-1)*13
-        #            hand[state[i]*14 + v - 1] = 1
+        #for i in range(6):
+        #    try:
+        #        ind = state.index(i)
+        #        if ind <= 51:
+        #            v = ind +1 - (ind//13)*13
+        #            hand[i*15 + v] = 1
         #        else:
-        #            hand[state[i]*14 + 13] = 1  
+        #            hand[i*15 + 14] = 1
+        #    except ValueError:
+        #        hand[i*15] = 1
+            
         #input_state = opp + dis + unk + hand
         #return self.network.feedforward(np.reshape(input_state, (1, len(input_state))))[0][0]
 
-        hand = [0]*(6*15)
-        for i in range(6):
-            try:
-                ind = state.index(i)
-                if ind <= 51:
-                    v = ind +1 - (ind//13)*13
-                    hand[i*15 + v] = 1
-                else:
-                    hand[i*15 + 14] = 1
-            except ValueError:
-                hand[i*15] = 1
-        return self.network.feedforward(np.reshape(hand, (1, len(hand))))[0][0]
+        #hand = [0]*(6*15)
+        #for i in range(6):
+        #    try:
+        #        ind = state.index(i)
+        #        if ind <= 51:
+        #            v = ind +1 - (ind//13)*13
+        #            hand[i*15 + v] = 1
+        #        else:
+        #            hand[i*15 + 14] = 1
+        #    except ValueError:
+        #        hand[i*15] = 1
+        #return self.network.feedforward(np.reshape(hand, (1, len(hand))))[0][0]
+
+        input_state = self.state_function(state)
+        return self.network.feedforward(np.reshape(input_state, (1, len(input_state))))[0][0]
 
     def add_noise(self, mean=0.0, sd=0.1):
         """
@@ -78,19 +88,66 @@ class CoEvo_Func_Approx(Func_Approx):
         self.network.W_output += np.random.normal(mean, sd, self.network.W_output.shape)
 
 class NEAT_Func_Approx(Func_Approx):
-    def __init__(self, network):
-        super().__init__(network)
+    def __init__(self, state_function, network):
+        super().__init__(state_function, network)
 
     def value_of_state(self, state):
-        hand = [0]*(6*15)
-        for i in range(6):
-            try:
-                ind = state.index(i)
-                if ind <= 51:
-                    v = ind +1 - (ind//13)*13
-                    hand[i*15 + v] = 1
-                else:
-                    hand[i*15 + 14] = 1
-            except ValueError:
-                hand[i*15] = 1
-        return self.network.activate(hand)[0]
+        #hand = [0]*(6*15)
+        #for i in range(6):
+        #    try:
+        #        ind = state.index(i)
+        #        if ind <= 51:
+        #            v = ind +1 - (ind//13)*13
+        #            hand[i*15 + v] = 1
+        #        else:
+        #            hand[i*15 + 14] = 1
+        #    except ValueError:
+        #        hand[i*15] = 1
+        #return self.network.activate(hand)[0]
+        input_state = self.state_function(state)
+        return self.network.activate(input_state)[0] 
+
+def one_hot_hand(state):
+    hand = [0]*(6*15)
+    for i in range(6):
+        try:
+            ind = state.index(i)
+            if ind <= 51:
+                v = ind +1 - (ind//13)*13
+                hand[i*15 + v] = 1
+            else:
+                hand[i*15 + 14] = 1
+        except ValueError:
+            hand[i*15] = 1
+    return hand
+
+def one_hot_state(state):
+    one_hot_state = []
+    for card_pos in state:
+        one_hot_card_pos = [0]*9
+        one_hot_card_pos[card_pos] = 1
+        one_hot_state += one_hot_card_pos
+    return one_hot_state
+
+def one_hot_state_and_hand(state):
+    opp, dis, unk, hand = [0]*54, [0]*54, [0]*54, [0]*(6*15)
+    for i in range(len(state)):
+        if state[i] == -3:
+            opp[i] = 1
+        elif state[i] == -2:
+            dis[i] = 1
+        elif state[i] == -1:
+            unk[i] = 1
+    for i in range(6):
+        try:
+            ind = state.index(i)
+            if ind <= 51:
+                v = ind +1 - (ind//13)*13
+                hand[i*15 + v] = 1
+            else:
+                hand[i*15 + 14] = 1
+        except ValueError:
+            hand[i*15] = 1
+            
+    input_state = opp + dis + unk + hand
+    return input_state
