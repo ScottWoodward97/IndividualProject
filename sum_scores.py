@@ -7,8 +7,8 @@ import itertools
 
 from golf import Golf_Analyser
 
-DIR_PATH = os.path.join('games', 'coevo_score_with_random_analysis', 'one_hot_hand_2', 'training')
-
+#DIR_PATH = os.path.join('games', 'coevo_score_with_random_analysis', 'one_hot_state_5', 'random')
+DIR_PATH = os.path.join('games', 'neat_analysis', 'one_hot_state_and_hand')
 files = glob.glob('%s/*.txt' % DIR_PATH)
 
 

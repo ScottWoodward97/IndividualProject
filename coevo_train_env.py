@@ -22,7 +22,7 @@ def check_exit(input_queue):
 
 
 #Replace with command line arguments
-DIR_PATH = os.path.join('games', 'coevo_score_with_random', 'one_hot_state_and_hand_4')
+DIR_PATH = os.path.join('games', 'coevo_score_with_random', 'one_hot_state_5')
 if not os.path.exists(DIR_PATH):
     os.makedirs(DIR_PATH)
 
@@ -46,7 +46,7 @@ except FileNotFoundError:
 
     print("Creating player")
 
-    player = Golf_Player(fa.one_hot_state_and_hand)
+    player = Golf_Player(fa.one_hot_state)
 
 try:
     with open(os.path.join(DIR_PATH, 'OPPONENT_PICKLE.p'), 'rb') as f:
@@ -55,7 +55,7 @@ try:
         print("Loading opponent")
 
 except FileNotFoundError:
-    opponent = Golf_Player(fa.one_hot_state_and_hand)
+    opponent = Golf_Player(fa.one_hot_state)
     opponent.add_noise()
 
     print("Creating opponent")

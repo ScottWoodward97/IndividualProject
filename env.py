@@ -10,8 +10,8 @@ import pickle
 
 g = Golf()
 
-DIR_PATH = os.path.join('games', 'coevo_score_with_random', 'one_hot_hand_1')
-DIR_PATH_SAVE = os.path.join('games', 'coevo_score_with_random_analysis', 'one_hot_hand_1')
+DIR_PATH = os.path.join('games', 'coevo_score_with_random', 'one_hot_state_5')
+DIR_PATH_SAVE = os.path.join('games', 'coevo_score_with_random_analysis', 'one_hot_state_5')
 
 if not os.path.exists(DIR_PATH_SAVE):
     os.makedirs(DIR_PATH_SAVE)
@@ -41,6 +41,7 @@ for n in range(2500):
     RANDOM_GAMES[0]+='\n'
     RANDOM_GAMES[1]+='\n'
 
+    #print(n)
     if (n+1)%125 == 0:
         print(n+1)   
         filename = time.strftime("%Y%m%d-%H%M%S-", time.gmtime())
