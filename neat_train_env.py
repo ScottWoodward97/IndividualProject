@@ -13,7 +13,7 @@ import glob
 #import visualize
 
 NUM_FITNESS_GAMES = 10
-DIR_PATH = "games/neat/one_hot_state"
+DIR_PATH = "games/neat/one_hot_state_and_hand_2"
 GENERATION = 0
 
 def evaluate_solution(solutions, config):
@@ -28,7 +28,7 @@ def evaluate_solution(solutions, config):
     for solution_id, solution in solutions:
         net = neat.nn.FeedForwardNetwork.create(solution, config)
 
-        player1 = Golf_Player(fa.one_hot_state, fa.NEAT_Func_Approx(fa.one_hot_state, net))
+        player1 = Golf_Player(fa.one_hot_state_and_hand, fa.NEAT_Func_Approx(fa.one_hot_state_and_hand, net))
         player2 = copy.deepcopy(player1)
 
         scores = []
@@ -49,7 +49,7 @@ def evaluate_solution(solutions, config):
         print(time.time() - t)
         #Use this to calculate fitness
         min_mean_score = np.mean(np.amin(scores, axis=1))
-        solution.fitness = (float)(600 - min_mean_score)
+        solution.fitness = (float)(540 - min_mean_score)
 
         if best is None or solution.fitness > best.fitness:
             best = solution
@@ -96,6 +96,8 @@ if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
+
+    ##Look to copy relevent config file across
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config-golf')
 

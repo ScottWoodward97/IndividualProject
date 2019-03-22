@@ -11,8 +11,8 @@ import neat
 
 g = Golf()
 
-DIR_PATH = os.path.join('games', 'neat', 'one_hot_state_and_hand')
-DIR_PATH_SAVE = os.path.join('games', 'neat_analysis', 'one_hot_state_and_hand')
+DIR_PATH = os.path.join('games', 'neat', 'one_hot_state')
+DIR_PATH_SAVE = os.path.join('games', 'neat_analysis', 'one_hot_state')
 CONFIG_PATH = DIR_PATH + '\config-golf'
 
 if not os.path.exists(DIR_PATH_SAVE):
@@ -24,7 +24,7 @@ with open(os.path.join(DIR_PATH, 'best_solutions', 'generation-49'), 'rb') as f:
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
                         CONFIG_PATH)
     network = neat.nn.FeedForwardNetwork.create(genome, config)
-    player = Golf_Player(fa.one_hot_state_and_hand, fa.NEAT_Func_Approx(fa.one_hot_state_and_hand, network))
+    player = Golf_Player(fa.one_hot_state, fa.NEAT_Func_Approx(fa.one_hot_state, network))
 
 random_player = Random_Golf_Player()
 
