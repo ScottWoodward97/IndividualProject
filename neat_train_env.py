@@ -10,16 +10,18 @@ import function_approximator as fa
 import pickle
 import time
 import glob
+import sys
+import shutil
 #import visualize
 
 NUM_FITNESS_GAMES = 10
-DIR_PATH = "games/neat/one_hot_state_and_hand_2"
+#DIR_PATH = "games/neat/one_hot_state_2"
 GENERATION = 0
 
 def evaluate_solution(solutions, config):
     ##I wish there was a better way to do this without altering the source code but there isn't
     global GENERATION
-
+    np.random.seed(None)
     seeds = np.random.randint(0, 2147483648, size=(NUM_FITNESS_GAMES, 9))
     decks = np.reshape([Deck(deck=[], jokers=True) for _ in range(9*NUM_FITNESS_GAMES)], (NUM_FITNESS_GAMES, 9))
     golf = Golf()
@@ -28,7 +30,7 @@ def evaluate_solution(solutions, config):
     for solution_id, solution in solutions:
         net = neat.nn.FeedForwardNetwork.create(solution, config)
 
-        player1 = Golf_Player(fa.one_hot_state_and_hand, fa.NEAT_Func_Approx(fa.one_hot_state_and_hand, net))
+        player1 = Golf_Player(STATE_FUNCTION, fa.NEAT_Func_Approx(STATE_FUNCTION, net))
         player2 = copy.deepcopy(player1)
 
         scores = []
@@ -62,7 +64,6 @@ def evaluate_solution(solutions, config):
             f.write(games)
     
     GENERATION += 1
-    print()
 
 def run(config_file):
     #Again, wish there was a better method of doing this
@@ -88,7 +89,7 @@ def run(config_file):
     pop.add_reporter(neat.Checkpointer(1, None,filename_prefix=DIR_PATH + "/checkpoints/generation-"))
 
 
-    winner = pop.run(evaluate_solution, 10)
+    winner = pop.run(evaluate_solution, 50-GENERATION)
     print('\nBest genome:\n{!s}'.format(winner))
 
 
@@ -101,9 +102,9 @@ if __name__ == '__main__':
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config-golf')
 
+    DIR_PATH = sys.argv[1]
     if not os.path.exists(DIR_PATH):
         os.makedirs(DIR_PATH)
-
     if not os.path.exists(os.path.join(DIR_PATH, "checkpoints")):
         os.makedirs(os.path.join(DIR_PATH, "checkpoints"))
     if not os.path.exists(os.path.join(DIR_PATH, "game_files")):
@@ -111,4 +112,20 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(DIR_PATH, "best_solutions")):
         os.makedirs(os.path.join(DIR_PATH, "best_solutions"))
 
-    run(config_path)
+    if sys.argv[2] == "one_hot_hand":
+        config_path = os.path.join(local_dir, 'config-golf-90')
+        STATE_FUNCTION = fa.one_hot_hand
+    elif sys.argv[2] == "one_hot_state_and_hand":
+        config_path = os.path.join(local_dir, 'config-golf-252')
+        STATE_FUNCTION = fa.one_hot_state_and_hand
+    elif sys.argv[2] ==  "one_hot_state":
+        config_path = os.path.join(local_dir, 'config-golf-486')
+        STATE_FUNCTION = fa.one_hot_state
+    else:
+        raise AttributeError("Input representation must be either one_hot_hand, one_hot_state_and_hand, or one_hot_state")
+
+    #copies the config file to the local directory of the run
+    if not os.path.exists(os.path.join(DIR_PATH,"config-golf")):
+        shutil.copy2(config_path, os.path.join(DIR_PATH,"config-golf"))
+    
+    run(os.path.join(DIR_PATH,"config-golf"))
