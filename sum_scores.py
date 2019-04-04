@@ -4,11 +4,13 @@ from operator import add
 import glob
 import numpy as np
 import itertools
-
+import sys
 from golf import Golf_Analyser
 
 #DIR_PATH = os.path.join('games', 'coevo_score_with_random_analysis', 'one_hot_state_5', 'random')
-DIR_PATH = os.path.join('games', 'neat_analysis', 'one_hot_state')
+#DIR_PATH = os.path.join('games', 'neat_analysis', 'one_hot_state')
+#DIR_PATH = os.path.join('games','round_robin','one_hot_hand_1_vs_one_hot_hand_2')
+DIR_PATH = sys.argv[1]
 files = glob.glob('%s/*.txt' % DIR_PATH)
 
 
@@ -52,6 +54,9 @@ score_means = np.mean(np_scores, axis=0)
 score_mins = np.amin(np_scores, axis=0)
 score_maxs = np.amax(np_scores, axis=0)
 
+num_wins = [sum(s[0] < s[1] for s in np_scores), sum(s[1] < s[0] for s in np_scores)]
+win_perc = 100*np.array(num_wins)/len(np_scores)
+
 matches=[]
 for hand_pair in hands:
     asc_vals_player = [ord(card) for card in hand_pair[0]]
@@ -67,15 +72,16 @@ match_mean = np.mean(matches, axis=0)*9
 
 end_dist = 100*np.sum(end, axis=0)/np.sum(end)
 
-
+print("Player wins %.2f%% of games" % win_perc[0])
 print("Player average: %.2f points per game" % score_means[0])
 print("Player score range: [%d, %d]" % (score_mins[0], score_maxs[0]))
-print("Player makes %.2f matches per game on average " % match_mean[0])
+print("Player makes %.2f matches per game on average" % match_mean[0])
 print("Player ends %.2f%% of matches" % end_dist[0])
 print()
+print("Opponent wins %.2f%% of games" % win_perc[1])
 print("Opponent average: %.2f points per game" % score_means[1])
 print("Opponent score range: [%d, %d]" % (score_mins[1], score_maxs[1]))
-print("Opponent makes %.2f matches per game on average " % match_mean[1])
+print("Opponent makes %.2f matches per game on average" % match_mean[1])
 print("Opponent ends %.2f%% of matches" % end_dist[1])
 print()
 print("Rounds take %.2f turns on average" % np.mean(turns))

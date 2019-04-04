@@ -23,4 +23,4 @@ def plot_mean_scores(dir_path, games_per_solution=10):
 
 
 
-plot_mean_scores("games/neat/one_hot_hand_2")
+plot_mean_scores("games/neat/one_hot_state_and_hand_3")

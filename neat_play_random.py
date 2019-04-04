@@ -1,6 +1,8 @@
 import time
 import os
 from operator import add
+import sys
+import re
 
 from golf import Golf, Golf_Analyser
 from player import Golf_Player, Random_Golf_Player, Greedy_Golf_Player
@@ -11,20 +13,26 @@ import neat
 
 g = Golf()
 
-DIR_PATH = os.path.join('games', 'neat', 'one_hot_state')
-DIR_PATH_SAVE = os.path.join('games', 'neat_analysis', 'one_hot_state')
-CONFIG_PATH = DIR_PATH + '\config-golf'
+DIR_PATH = sys.argv[1] #os.path.join('games', 'neat', 'one_hot_state_2')
+
+DIR_PATH_SAVE = os.path.join(sys.argv[2] , re.split(r'/|\\', sys.argv[1])[-1]) #os.path.join('games', 'neat_analysis', 'one_hot_state_2')
+CONFIG_PATH = os.path.join(DIR_PATH ,'config-golf')
 
 if not os.path.exists(DIR_PATH_SAVE):
     os.makedirs(DIR_PATH_SAVE)
 
 with open(os.path.join(DIR_PATH, 'best_solutions', 'generation-49'), 'rb') as f:
     genome = pickle.load(f)
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+
+config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
                         CONFIG_PATH)
-    network = neat.nn.FeedForwardNetwork.create(genome, config)
-    player = Golf_Player(fa.one_hot_state, fa.NEAT_Func_Approx(fa.one_hot_state, network))
+
+num_inputs = config.genome_config.num_inputs
+state_function = fa.one_hot_hand if num_inputs == 90 else (fa.one_hot_state_and_hand if num_inputs == 252 else fa.one_hot_state)
+
+network = neat.nn.FeedForwardNetwork.create(genome, config)
+player = Golf_Player(state_function, fa.NEAT_Func_Approx(state_function, network))
 
 random_player = Random_Golf_Player()
 
