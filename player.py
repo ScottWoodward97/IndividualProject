@@ -90,6 +90,7 @@ class Golf_Player(Player):
         if game_state[Golf.get_card_index(drawn_card)] == -2:
             index = ind
         else:
+            #Check if card improves upon current hand
             max_val = self.function_approximator.value_of_state(game_state)
             index = ind if val > max_val else 8
 
@@ -164,7 +165,11 @@ class Random_Golf_Player(Player):
             game_state ([int]): Not used.
         Returns: An Actions object corresponding to the card being discarded.
         """
-        return Actions(random.choice([0, 1, 2, 3, 4, 5, 8]))
+        ##Uh oh, can't allow it to discard a card is drawn from the discard pile
+        disc_options = [0,1,2,3,4,5]
+        if game_state[Golf.get_card_index(drawn_card)] == -2:
+            disc_options += [8]
+        return Actions(random.choice(disc_options))
 
 class Greedy_Golf_Player(Player):
     def __init__(self):
@@ -182,5 +187,9 @@ class Greedy_Golf_Player(Player):
         for i in range(6):
             if self.hand[i].hidden == False and Golf.card_score(v) < Golf.card_score(self.hand[i].get_val_suit()[0]):
                 return Actions(i)
-
-        return Actions(random.choice([i for i in range(6) if self.hand[i].hidden == True] + [8]))
+        
+        disc_options = [i for i in range(6) if self.hand[i].hidden == True]
+        #Prevent card drawn from discard pile from being discarded
+        if game_state[Golf.get_card_index(drawn_card)] == -2:
+            disc_options += [8]
+        return Actions(random.choice(disc_options))
