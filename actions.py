@@ -1,5 +1,9 @@
 from enum import IntEnum
 class Actions(IntEnum):
+    """
+    Class to represent the actions a player can make numerically.
+    Allows for greater readbility within the code.
+    """
     EXCHANGE_ZERO = 0
     EXCHANGE_ONE = 1
     EXCHANGE_TWO = 2
