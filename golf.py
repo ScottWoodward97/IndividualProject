@@ -685,8 +685,12 @@ class Golf_Analyser():
         colors = ['red', 'blue', 'green', 'magenta', 'orange', 'cyan', 'purple', 'grey', 'lime', 'yellow', 'black', 'salmon', 'teal', 'navy']
         labels = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Joker']
 
+        debug = np.sum(np_data_0, axis=1)
+        d = np.mean(debug)
+
         for i in range(14):
             plt.bar(x_axis, np_data_0[:,i], width=1.0, bottom=np.sum(np_data_0[:,:i], axis=1), color=colors[i], label=labels[i]) 
+        plt.ylim(top=540)
         plt.xlabel(xlabel)
         plt.ylabel("Number of times cards in hand")
         plt.title("Popularity of cards per " + xlabel + " for Player")
@@ -694,6 +698,7 @@ class Golf_Analyser():
         plt.show()
         for i in range(14):
             plt.bar(x_axis, np_data_1[:,i], width=1.0, bottom=np.sum(np_data_1[:,:i], axis=1), color=colors[i], label=labels[i]) 
+        plt.ylim(top=540)
         plt.xlabel(xlabel)
         plt.ylabel("Number of times cards in hand")
         plt.title("Popularity of cards per " + xlabel + " for Opponent")
