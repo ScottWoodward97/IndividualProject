@@ -467,7 +467,7 @@ class Golf_Analyser():
         Golf_Analyser.plot_data(data, 2, "Games", "Score", "Scores per game", "Player", "Opponent")
 
     @staticmethod
-    def plot_mean_scores(dir_path, games_per_epoch=10):
+    def plot_mean_scores(dir_path, games_per_epoch=10, xlabel="Epochs"):
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -490,7 +490,7 @@ class Golf_Analyser():
             for i in range(len(scores)//games_per_epoch):
                 data.append(np.mean(scores[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
         
-        Golf_Analyser.plot_data(data, 2, "Epochs", "Mean Score", "Mean scores per game across Epochs", "Player", "Opponent")
+        Golf_Analyser.plot_data(data, 2, xlabel, "Mean Score", "Mean scores per game across " + xlabel, "Player", "Opponent")
 
     @staticmethod ##LOOK AT CHANGING
     def plot_win_loss(dir_path, games_per_epoch=10):
@@ -524,7 +524,7 @@ class Golf_Analyser():
         Golf_Analyser.plot_data(data, "Win-Loss %", "Epochs")
 
     @staticmethod
-    def plot_number_matching(dir_path, games_per_epoch=10):
+    def plot_number_matching(dir_path, games_per_epoch=10, xlabel="Epochs"):
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -547,8 +547,6 @@ class Golf_Analyser():
             hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
             matches = []
             for hand_pair in hands:
-                #print(hand_pair)
-                #print(hand_pair[0])
                 asc_vals_player = [ord(card) for card in hand_pair[0]]
                 player_matches = sum((asc_vals_player[i] > 116 and asc_vals_player[i+3] > 116) 
                                     or (asc_vals_player[i] < 117 and asc_vals_player[i+3] < 117 and (asc_vals_player[i] - asc_vals_player[i+3])%13==0) for i in range(3))
@@ -558,12 +556,12 @@ class Golf_Analyser():
                                     or (asc_vals_opponent[i] < 117 and asc_vals_opponent[i+3] < 117 and (asc_vals_opponent[i] - asc_vals_opponent[i+3])%13==0) for i in range(3))
                 matches.append([player_matches, opponent_matches])
             for i in range(len(matches)//(9*games_per_epoch)):
-                data.append(np.sum(matches[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
+                data.append(np.sum(matches[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0)/games_per_epoch)
 
-        Golf_Analyser.plot_data(data, 2, "Epochs", "Number of Matches", "Number of Matches per game across Epochs", "Player", "Opponent")
+        Golf_Analyser.plot_data(data, 2, xlabel, "Number of Matches", "Number of Matches per game across " + xlabel, "Player", "Opponent")
 
     @staticmethod
-    def plot_number_of_turns(dir_path, games_per_epoch=10):
+    def plot_number_of_turns(dir_path, games_per_epoch=10, xlabel="Epochs"):
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -587,10 +585,10 @@ class Golf_Analyser():
             for i in range(len(turns)//(9*games_per_epoch)):
                 data.append(np.mean(turns[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
 
-        Golf_Analyser.plot_data(np.reshape(data, (len(data), 1)), 1, "Epochs", "Average Number of Turns", "Average Number of Turns per round per Epochs", "Total number of turns")
+        Golf_Analyser.plot_data(np.reshape(data, (len(data), 1)), 1, xlabel, "Average Number of Turns", "Average Number of Turns per round per " + xlabel, "Total number of turns")
 
     @staticmethod
-    def plot_rounds_ended(dir_path, games_per_epoch=10):
+    def plot_rounds_ended(dir_path, games_per_epoch=10, xlabel="Epochs"):
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -621,9 +619,9 @@ class Golf_Analyser():
 
         x_axis = np.linspace(1, len(data), len(data), dtype=int)
 
-        plt.xlabel("Epochs")
+        plt.xlabel(xlabel)
         plt.ylabel("Rounds Ended")
-        plt.title("Number of rounds ended per Epochs")
+        plt.title("Number of rounds ended per "+ xlabel)
         
         plt.bar(x_axis, np_data[:, 0], width=1.0, color='b' , label="Player")
         plt.bar(x_axis, np_data[:, 1], width=1.0, bottom=np_data[:, 0], color='r' , label="Opponent")
@@ -633,7 +631,7 @@ class Golf_Analyser():
         plt.show()
 
     @staticmethod
-    def plot_card_popularity(dir_path, games_per_epoch=10):
+    def plot_card_popularity(dir_path, games_per_epoch=10, xlabel="Epochs"):
         files = glob.glob('%s/*.txt' % dir_path)
         data_0, data_1 = [], []
 
@@ -682,25 +680,24 @@ class Golf_Analyser():
 
         x_axis = np.linspace(1, len(data_0), len(data_0), dtype=int)
 
-        fig, (ax_0, ax_1) = plt.subplots(nrows=2)
+        #fig, (ax_0, ax_1) = plt.subplots(nrows=2)
 
         colors = ['red', 'blue', 'green', 'magenta', 'orange', 'cyan', 'purple', 'grey', 'lime', 'yellow', 'black', 'salmon', 'teal', 'navy']
         labels = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Joker']
 
         for i in range(14):
-            ax_0.bar(x_axis, np_data_0[:,i], width=1.0, bottom=np.sum(np_data_0[:,:i], axis=1), color=colors[i], label=labels[i])
-            ax_1.bar(x_axis, np_data_1[:,i], width=1.0, bottom=np.sum(np_data_1[:,:i], axis=1), color=colors[i], label=labels[i])
-      
-        ax_0.set_xlabel("Epochs")
-        ax_0.set_ylabel("Number of times cards in hand")
-        ax_0.set_title("Popularity of cards per Epochs for Player")
-        ax_0.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        ax_1.set_xlabel("Epochs")
-        ax_1.set_ylabel("Number of times cards in hand")
-        ax_1.set_title("Popularity of cards per Epochs for Opponent")
-        ax_1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-        fig.subplots_adjust(hspace=0.3)
+            plt.bar(x_axis, np_data_0[:,i], width=1.0, bottom=np.sum(np_data_0[:,:i], axis=1), color=colors[i], label=labels[i]) 
+        plt.xlabel(xlabel)
+        plt.ylabel("Number of times cards in hand")
+        plt.title("Popularity of cards per " + xlabel + " for Player")
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.show()
+        for i in range(14):
+            plt.bar(x_axis, np_data_1[:,i], width=1.0, bottom=np.sum(np_data_1[:,:i], axis=1), color=colors[i], label=labels[i]) 
+        plt.xlabel(xlabel)
+        plt.ylabel("Number of times cards in hand")
+        plt.title("Popularity of cards per " + xlabel + " for Opponent")
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.show()
 
 

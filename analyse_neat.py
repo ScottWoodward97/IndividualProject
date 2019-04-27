@@ -98,7 +98,7 @@ def plot_mean_number_of_matches(dir_path, games_per_solution=10):
 
         solution_scores = np.reshape(all_scores, (len(all_scores)//games_per_solution, games_per_solution, 2))
         solution_matches = np.reshape(all_matches, (len(all_matches)//games_per_solution, games_per_solution, 9, 2))
-        solution_matches = [np.sum(sol) for sol in solution_matches]
+        solution_matches = [np.sum(sol)/games_per_solution for sol in solution_matches]
         
         mean_solution_scores = np.mean(np.amin(solution_scores, axis=2), axis=1)
         
@@ -137,6 +137,6 @@ def extract_matches_round(hands):
 
 import sys
 p = sys.argv[1] #"games/neat/one_hot_hand_2"
-#plot_mean_scores(p)
-#plot_mean_number_of_turns(p)
+plot_mean_scores(p)
+plot_mean_number_of_turns(p)
 plot_mean_number_of_matches(p)
