@@ -137,8 +137,8 @@ class Golf_Player(Player):
 
 class Random_Golf_Player(Player):
     """
-    The Random_Golf_Player is a player that can play the game of golf
-    but all decisions, draw and discard, are made randomly with equal probability.
+    The Random_Golf_Player is a player that can play the game of golf 
+        but all decisions, draw and discard, are made randomly with equal probability.
     """
     def __init__(self):
         super().__init__([], [])
@@ -165,31 +165,54 @@ class Random_Golf_Player(Player):
             game_state ([int]): Not used.
         Returns: An Actions object corresponding to the card being discarded.
         """
-        ##Uh oh, can't allow it to discard a card is drawn from the discard pile
         disc_options = [0,1,2,3,4,5]
-        if game_state[Golf.get_card_index(drawn_card)] == -2:
+        #Prevents the player discarding a card drawn from the discard pile
+        if game_state[Golf.get_card_index(drawn_card)] != -2:
             disc_options += [8]
         return Actions(random.choice(disc_options))
 
 class Greedy_Golf_Player(Player):
+    """
+    A (heuristic) player that can play the game of golf with some understanding of the game.
+    The decisions made are greedier and most akin to how a human would play the game.
+    """
     def __init__(self):
         super().__init__([], [])
 
     def choose_draw(self, top_discard, game_state):
         """
+        Decides whether to draw from the deck or the discard pile.
+        If the card on the top of the discard pile scores more than 6, then the player chooses to draw from the deck.
+        Otherwise the player chooses to draw from the discard pile.
+        The decision is returned as an instance of the Actions IntEnum class.
+        Args:
+            top_discard (Card): The card on top of the discard pile.
+            game_state ([int]): Not used.
+        Returns: An Actions object corresponding to the chosen draw location.
         """
         return Actions.DRAW_DECK if 6 < top_discard.get_val_suit()[0] < 13 else Actions.DRAW_DISCARD
 
     def choose_discard(self, drawn_card, game_state):
         """
+        Decides which card in its hand to exchange with the drawn_card or whether to discard it.
+        If there are any cards in the hand that score more than the drawn card, then the first card that scores more is exchanged.
+        If the drawn card scores more than all visible cards in the hand, then it chooses from the remaining legal moves randomly.
+        This random decision is made using pythons random choice method.        
+        The decision is returned as an instance of the Actions IntEnum class.
+        Args:
+            drawn_card (Card): The card that has been drawn by the player.
+            game_state ([int]): Not used.
+        Returns: An Actions object corresponding to the card being discarded.
         """
         v, _ = drawn_card.get_val_suit()
         for i in range(6):
+            #Exchanges the drawn card with the first card that scores more
             if self.hand[i].hidden == False and Golf.card_score(v) < Golf.card_score(self.hand[i].get_val_suit()[0]):
                 return Actions(i)
         
         disc_options = [i for i in range(6) if self.hand[i].hidden == True]
-        #Prevent card drawn from discard pile from being discarded
-        if game_state[Golf.get_card_index(drawn_card)] == -2:
+        #Prevents the player discarding a card drawn from the discard pile
+        if game_state[Golf.get_card_index(drawn_card)] != -2:
             disc_options += [8]
+        #If no card scores more, choose from remaining legal moves randomly
         return Actions(random.choice(disc_options))
