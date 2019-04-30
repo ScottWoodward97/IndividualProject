@@ -7,7 +7,6 @@ Args:
     DIR_PATH (String): First command line argument. The directory where the relevant NEAT files are located.
     DIR_PATH_SAVE (String): Second command line argument. The path to the directory where the game data will be saved.
 """
-import time
 import os
 from operator import add
 import sys
@@ -31,8 +30,6 @@ CONFIG_PATH = os.path.join(DIR_PATH ,'config-golf')
 
 if not os.path.exists(DIR_PATH_SAVE):
     os.makedirs(DIR_PATH_SAVE)
-
-t = time.time()
 
 #Gets all paths to the best solution files in order of time created
 gen_files = sorted(glob.glob(os.path.join(DIR_PATH, 'best_solutions/*')), key=os.path.getctime)
@@ -69,7 +66,3 @@ for gen_genome in gen_files:
     for i in range(2):
         with open(os.path.join(DIR_PATH_SAVE, '%s%d-%d.txt' % (filename, generation, i)), 'w+') as f:
             f.write(RANDOM_GAMES[i])
-        
-
-t_2 = time.time()
-print(t_2-t)

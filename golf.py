@@ -1,3 +1,9 @@
+"""
+---golf.py---
+Contains both the Golf class and Golf_Analyser class.
+The Golf class provides all methods for playing the game of Golf with two players.
+The Golf_analyser class contains all methods for extracting, analysing and plotting the data form the saved game files.
+"""
 from operator import add
 import random
 import time
@@ -14,11 +20,14 @@ from actions import Actions
 
 class Golf():
     """
+    Contains all methods and attributes to represent the card game Golf.
+    Allows for two players to play a full game consiting of nine rounds in pairs. 
+    Attributes:
+        discard_pile (list): A list which contains cards in the discard pile.
+        stock (Deck): The deck of cards used in the game
     """
 
     def __init__(self, stock=None):
-        #self.discard_pile = None
-        #self.stock = None
         self.initialise(stock)
 
     def initialise(self, stock=None):
@@ -68,11 +77,6 @@ class Golf():
             ind = self.get_card_index(card)
             if ind is not None:
                 state[ind] = -2
-            #v,s = card.get_val_suit()
-            #if v == -1:
-            #    state[s] = -2 #Locations.IN_DISC_PILE
-            #else:
-            #    state[ (s-1)*13 + v-1 ] = -2 #Locations.IN_DISC_PILE
 
         #Iterate through cards in opposing player hands
         for p in other_players:
@@ -82,13 +86,6 @@ class Golf():
                     continue
                 else:
                     state[ind] = -3
-                #v,s = card.get_val_suit()
-                #if v == 0:
-                #    continue
-                #elif v == -1:
-                #    state[s] = -3 #Locations.IN_OPP_HAND
-                #else:
-                #    state[ (s-1)*13 + v-1 ] = -3 #Locations.IN_OPP_HAND
 
         #Iterate through cards in the players hand
         for i in range(6):
@@ -97,13 +94,6 @@ class Golf():
                 continue
             else:
                 state[ind] = i
-            #v,s = player.hand[i].get_val_suit()
-            #if v == 0:
-            #    continue
-            #elif v == -1:
-            #    state[s] = i #Locations(i)
-            #else:
-            #    state[ (s-1)*13 + v-1 ] = i #Locations(i)
 
         return state
 
@@ -202,28 +192,24 @@ class Golf():
                 score += self.card_score(card_1.get_val()) + self.card_score(card_2.get_val())
         return score
 
-    def play(self, *players):
-        """
-        """
-
-        GAME = ""
-
-        for r in range(9):
-
-            #Initialise game state 
-            self.initialise()
-            g = self.play_round(r, *players)
-            GAME += g + '\n'
-
-        return GAME
-
     def play_round(self, round_num, *players):
         """
+        Plays a single round of the card game Golf.
+        Each player is given a hand of six cards, represented by a numpy array.
+        Each turn, players choose where to draw from and what card they want to discard from their hand.
+        The game ends once a player starts their turn with all cards face up.
+        The aim of the players is to reduce the score of their hand.
+        Throughout the game and afterwards, data is added to the cumulative game history 
+            which is saved for later analysis but also used to detect loops in gameplay.
+        Args:
+            round_num (int): The current round number. Determines which player goes first.
+            players ([Player]): The players in the game.
+        Returns: A string containing the game history
         """
         GAME_HISTORY = ""
 
-        PLAYERS = [player for player in players]    #len(PLAYERS) for number of players in game
-        turn = round_num % len(PLAYERS)             #turn is the player indeex who starts
+        PLAYERS = [player for player in players]    
+        turn = round_num % len(PLAYERS) 
 
         GAME_HISTORY += str(len(PLAYERS)) + str(turn)
 
@@ -242,7 +228,7 @@ class Golf():
             face_up[0].hidden = False
             face_up[1].hidden = False
 
-        #Will have access to the starting hands of the players here
+        #Add initial hands of the players to the game history
         for p in PLAYERS:
             for card in p.hand:
                 GAME_HISTORY += self.card_to_char(card)
@@ -250,31 +236,36 @@ class Golf():
 
         self.discard_pile.append(self.stock.draw())
 
-        #Game starts here, '<'
         GAME_HISTORY += '<'
 
-        #Player turns
+        #Turns of the round
         while not self.has_finished(PLAYERS[turn]):
             s = self.get_state(PLAYERS[turn], PLAYERS[:turn]+PLAYERS[turn+1:])
-            draw_action = PLAYERS[turn].choose_draw(self.discard_pile[-1], s) #draw_action shows where drawn from
+            
+            #The player decides where to draw from
+            draw_action = PLAYERS[turn].choose_draw(self.discard_pile[-1], s)
 
+            #Draw from the desired location and add to game history
             if draw_action == Actions.DRAW_DECK:
                 drawn_card = self.stock.draw()
                 GAME_HISTORY += '+' + self.card_to_char(drawn_card)
             else:
                 drawn_card = self.discard_pile.pop()
-                GAME_HISTORY += '-' + self.card_to_char(drawn_card)             #convert drawn_card here
-
-            discard_action = PLAYERS[turn].choose_discard(drawn_card, s)        #discard_action shows where discarding
+                GAME_HISTORY += '-' + self.card_to_char(drawn_card)             
+            
+            #The player decides what card to discard
+            discard_action = PLAYERS[turn].choose_discard(drawn_card, s) 
 
             if discard_action == Actions.DISCARD:
+                #Discard the drawn card to the discard pile
                 self.discard_pile.append(drawn_card)
                 GAME_HISTORY += '6' + GAME_HISTORY[-1]
             else:
+                #Exchange the drawn card with the card to discard and add it to the discard pile
                 disc_card, PLAYERS[turn].hand[discard_action.value] = PLAYERS[turn].hand[discard_action.value], drawn_card
                 disc_card.hidden = False
                 self.discard_pile.append(disc_card)
-                GAME_HISTORY += str(discard_action.value) + self.card_to_char(disc_card)                         #convert discarded card here, might need refactoring to make it nicer
+                GAME_HISTORY += str(discard_action.value) + self.card_to_char(disc_card)
 
             turn = turn + 1 if turn + 1 < len(PLAYERS) else 0
             
@@ -291,61 +282,67 @@ class Golf():
                 self.discard_pile = self.discard_pile[-1:]
 
         GAME_HISTORY += '>' + str(turn)
-        #At this point the round has ended and thus all end game data can be calculated and added
-
+        
+        #Add end game information to the game history
         end_info = []
         for count, player in enumerate(PLAYERS):
             end_info.append([str(sum(card.hidden == True for card in player.hand))])
+            ##Reveal the hand of each player
             self.reveal_hand(player)
             end_info[count].append("".join([self.card_to_char(card) for card in player.hand]))
+            #Score each hand
             end_info[count].append("%02d" % self.score_hand(player.hand))
 
         end_info = list(map(list, zip(*end_info)))
         for entry in end_info:
             GAME_HISTORY += "".join(entry)
 
-
-        return GAME_HISTORY #[self.score_hand(player.hand) for player in PLAYERS]
+        #Return the game history
+        return GAME_HISTORY
 
 
     def play_pair(self, player1, player2):
         """
+        Plays a pair games of Golf where the second game is exactly the same as the first but with the player positions reversed.
+        This aims to reduce the affect of randomness as both players can equally benefit from the luck of the game.
+        Before the rounds are played, 9 seeds are generated which can control the randomness such that the two games can be identical.
+        The rounds are played in parallel to allow for efficient use of memory when generating the decks for game play.
+        Args:
+            player1, player2 (Player): The two players in the game.
+        Returns: The game histories of both games in a list
         """
         PLAYERS = [player1, player2]
-        num_players = 2 #len(PLAYERS)
+        num_players = 2 
         games = ["", ""]
         np.random.seed(None)
+        #Generates the random seeds
         seeds = np.random.randint(0, 2147483648, size=9)
 
         for r in range(9):
-
-            np_seed = seeds[r] #int(time.time())
-
+            np_seed = seeds[r]
             set_deck = Deck(deck=[], jokers=True)
             for g in range(num_players):
+                #Initialise the round
                 np.random.seed(np_seed)
-
                 self.initialise(set_deck)
-
+                #Play the round
                 result = self.play_round(r, *PLAYERS)
                 games[g] += result + '\n'
-                #scores = Golf_Analyser.extract_scores(game.rstrip())
+                
+                #Reverse player positions
                 PLAYERS += [PLAYERS.pop(0)]
-
-                #results[g] = [results[g][i-g] + scores[i-g] for i in range(num_players)]
 
         return games
 
 class Golf_Analyser():
     """
-    This is a class that can extract data from the encoded game history.
+    A class containing methods to extract, analyse and plot data from game files.
     """
 
     @staticmethod
     def extract_scores(game):
         """
-        Given the history of a game in the stored format, extract the final scores for the players.
-        That is, the total score across all nine rounds of the game.
+        Extract the final scores obtained by both players in a game of Golf.
         It does so by iteritively extracting the scores from each round in game.
         Args:
             game (String): A string containing the history of a game, which is nine rounds separated by '\n' characters.
@@ -360,6 +357,13 @@ class Golf_Analyser():
 
     @staticmethod
     def extract_hands(game):
+        """
+        Extract the final hands obtained by both players in a game of Golf.
+        It does so by iteritively extracting the hands from each round in game.
+        Args:
+            game (String): A string containing the history of a game, which is nine rounds separated by '\n' characters.
+        Returns: A list of the final (String) hands of each player.
+        """
         hands = []
         rounds = game.split('\n')[:-1]
         for r in rounds:
@@ -368,6 +372,12 @@ class Golf_Analyser():
 
     @staticmethod
     def extract_number_of_turns(game):
+        """
+        Extract the number of turns taken in each round of a game of golf.
+        Args:
+            game (String): A string containing the history of a game, which is nine rounds separated by '\n' characters.
+        Returns: A list of the total number of turns (int) for each round.
+        """
         turns = []
         rounds = game.split('\n')[:-1]
         for r in rounds:
@@ -376,6 +386,12 @@ class Golf_Analyser():
 
     @staticmethod
     def extract_rounds_ended(game):
+        """
+        Extract the number of rounds obtained by both players, and those that were terminated, in a game of Golf.
+        Args:
+            game (String): A string containing the history of a game, which is nine rounds separated by '\n' characters.
+        Returns: A list of the number of times each player ended a round and the number of times it was terminated.
+        """
         total = []
         rounds = game.split('\n')[:-1]
         for r in rounds:
@@ -402,19 +418,37 @@ class Golf_Analyser():
 
     @classmethod
     def extract_hands_round(cls, game_round):
+        """
+        Extracts the hands of each player from a single round 'game_round'
+        Args:
+            game_round (string): A string containing the history of a single round.
+        Returns: A list containing the hands of each player for this round.
+        """
         num_players = int(game_round[0])
+        #Extract and reformat the final hands of the player from the game history
         concat_hands = game_round.split('>')[1][3:-2*num_players]
         hands = [concat_hands[i*6:(i+1)*6] for i in range(num_players)]
         return hands
 
     @classmethod
     def extract_number_of_turns_round(cls, game_round):
-        #num_players = int(game_round[0])
+        """
+        Extracts the number of turns in a round of golf.
+        Args:
+            game_round (string): A string containing the history of a single round.
+        Returns: The number of turns taken.
+        """
         turns = game_round.split('<')[1].split('>')[0]
         return len(turns)//4
 
     @classmethod
     def extract_round_ended(cls, game_round):
+        """
+        Extracts what player ended the current round or whether it was terminated.
+        Args:
+            game_round (string): A string containing the history of a single round.
+        Returns: A list containing the what player ended the round or if it was terminated.
+        """
         num_players = int(game_round[0])
         info = list(map(int, game_round.split('>')[1][0:(num_players + 1)]))
         tally = [0]*(num_players + 1)
@@ -424,6 +458,16 @@ class Golf_Analyser():
 
     @staticmethod
     def extract_all_mean_scores(dir_path, games_per_epoch=10):
+        """
+        Extracts and calculates the mean scores from all game files in a directory.
+        This method is used when games are played in pairs, and as such orders the extracted data chronologically.
+        When extracting scores from the reversed positions, the scores are also reversed to allgins the scores of both players.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+        Returns: A nested list containing all of the mean scores of both players 
+        """
+        #Retreive the path of all game files in the directory
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -432,23 +476,39 @@ class Golf_Analyser():
         for pair in pair_files:
             scores_0, scores_1 = [],[]
             
+            #Extract the scores from the first file
             with open(pair[0], 'r') as f0:
                 games_0 = f0.read().split('\n\n')[:-1]
             for game in games_0:
                 scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
             
+            #Extract and reverses the order of the scores from the second file
             with open(pair[1], 'r') as f1:
                 games_1 = f1.read().split('\n\n')[:-1]
             for game in games_1:
                 scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
 
+            #Collate the scores together such that they are in chronological order
             scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
+            #Average the scores over the number of games per epoch
             for i in range(len(scores)//games_per_epoch):
                 data.append(np.mean(scores[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
         return data
 
     @staticmethod
     def extract_all_matches(dir_path, games_per_epoch=10):
+        """
+        Extracts and calculates the mean number of matches made from all game files in a directory.
+        The number of matches are calculated by extracting the hands obtained in each round of the games.
+        From the hands, the number of cards matching are counted by converting the character back to their value.
+        This method is used when games are played in pairs, and as such orders the extracted data chronologically.
+        When extracting the hands from the reversed positions, the hands are also reversed to allgins the hands of both players.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+        Returns: A nested list containing all of the mean number of matches of both players 
+        """
+        #Retreive the path of all game files in the directory
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -457,19 +517,23 @@ class Golf_Analyser():
         for pair in pair_files:
             hands_0, hands_1 = [],[]
             
+            #Extract the hands from the first file
             with open(pair[0], 'r') as f0:
                 games_0 = f0.read().split('\n\n')[:-1]
             for game in games_0:
                 hands_0 += Golf_Analyser.extract_hands(game + '\n')
             
+            #Extract and reverses the order of the hands from the second file
             with open(pair[1], 'r') as f1:
                 games_1 = f1.read().split('\n\n')[:-1]
             for game in games_1:
                 tmp_hands = Golf_Analyser.extract_hands(game + '\n')
                 hands_1 += [h[::-1] for h in tmp_hands]
 
+            #Collate the hands together such that they are in chronological order
             hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
             matches = []
+            #Counts the number of matches made by each hand in a round
             for hand_pair in hands:
                 asc_vals_player = [ord(card) for card in hand_pair[0]]
                 player_matches = sum((asc_vals_player[i] > 116 and asc_vals_player[i+3] > 116) 
@@ -479,12 +543,23 @@ class Golf_Analyser():
                 opponent_matches = sum((asc_vals_opponent[i] > 116 and asc_vals_opponent[i+3] > 116) 
                                     or (asc_vals_opponent[i] < 117 and asc_vals_opponent[i+3] < 117 and (asc_vals_opponent[i] - asc_vals_opponent[i+3])%13==0) for i in range(3))
                 matches.append([player_matches, opponent_matches])
+            
+            #Average the number of matches made over the number of games per epoch
             for i in range(len(matches)//(9*games_per_epoch)):
                 data.append(np.sum(matches[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0)/games_per_epoch)
         return data
 
     @staticmethod
     def extract_all_turn_nums(dir_path, games_per_epoch=10):
+        """
+        Extracts and calculates the duration of each round made from all game files in a directory.
+        This method is used when games are played in pairs, and as such orders the extracted data chronologically.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+        Returns: A nested list containing the average number of turns made per round 
+        """
+        #Retreive the path of all game files in the directory
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -493,24 +568,38 @@ class Golf_Analyser():
         for pair in pair_files:
             turns_0, turns_1 = [],[]
             
+            #Extract the number of turns from the first file
             with open(pair[0], 'r') as f0:
                 games_0 = f0.read().split('\n\n')[:-1]
             for game in games_0:
                 turns_0 += Golf_Analyser.extract_number_of_turns(game + '\n')
             
+            #Extract the number of turns from the second file
             with open(pair[1], 'r') as f1:
                 games_1 = f1.read().split('\n\n')[:-1]
             for game in games_1:
                 turns_1 += Golf_Analyser.extract_number_of_turns(game + '\n')
 
+            #Collate the number of turns together such that they are in chronological order
             turns = [t for t in itertools.chain.from_iterable(zip(turns_0, turns_1))]
             
+            #Average the number of turns over the number of games per epoch
             for i in range(len(turns)//(9*games_per_epoch)):
                 data.append(np.mean(turns[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
         return data
 
     @staticmethod
     def extract_all_rounds_ended(dir_path, games_per_epoch=10):
+        """
+        Extracts and calculates the number of rounds ended by each player from all game files in a directory.
+        This method is used when games are played in pairs, and as such orders the extracted data chronologically.
+        When extracting the number of round ended from the reversed positions, the scores are also reversed to allgins the number of rounds ended of both players.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to sum data.
+        Returns: A nested list containing the number of rounds ended by each player 
+        """
+        #Retreive the path of all game files in the directory
         files = glob.glob('%s/*.txt' % dir_path)
         data = []
 
@@ -519,19 +608,23 @@ class Golf_Analyser():
         for pair in pair_files:
             end_0, end_1 = [],[]
             
+            #Extract the number of rounds ended from the first file
             with open(pair[0], 'r') as f0:
                 games_0 = f0.read().split('\n\n')[:-1]
             for game in games_0:
                 end_0 += Golf_Analyser.extract_rounds_ended(game + '\n')
             
+            #Extract and reverses the order of the number of rounds ended from the second file
             with open(pair[1], 'r') as f1:
                 games_1 = f1.read().split('\n\n')[:-1]
             for game in games_1:
                 tmp_ends = Golf_Analyser.extract_rounds_ended(game + '\n')[0]
                 end_1 += [tmp_ends[:-1][::-1] + tmp_ends[-1:]]
 
+            #Collate the number of rounds ended together such that they are in chronological order
             ended = [e for e in itertools.chain.from_iterable(zip(end_0, end_1))]
             
+            #Sums the number of rounds ended over the number of games per epoch
             for i in range(len(ended)//games_per_epoch):
                 data.append(np.sum(ended[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
         
@@ -539,6 +632,18 @@ class Golf_Analyser():
 
     @staticmethod
     def extract_all_card_frequency(dir_path, games_per_epoch=10):
+        """
+        Extracts and calculates the frequency of cards in the final hands of players from all game files in a directory.
+        The frequency of cards are calculated by extracting the hands obtained in each round of the games.
+        From the hands, the number of times cards appear are counted by converting the character back to their value.
+        This method is used when games are played in pairs, and as such orders the extracted data chronologically.
+        When extracting the hands from the reversed positions, the hands are also reversed to allgins the hands of both players.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+        Returns: A tuple of two lists containing the frequency of cards of each players 
+        """
+        #Retreive the path of all game files in the directory
         files = glob.glob('%s/*.txt' % dir_path)
         data_0, data_1 = [], []
 
@@ -547,24 +652,31 @@ class Golf_Analyser():
         for pair in pair_files:
             hands_0, hands_1 = [],[]
             
+            #Extract the hands from the first file
             with open(pair[0], 'r') as f0:
                 games_0 = f0.read().split('\n\n')[:-1]
             for game in games_0:
                 hands_0 += Golf_Analyser.extract_hands(game + '\n')
             
+            #Extract and reverses the order of the hands from the second file
             with open(pair[1], 'r') as f1:
                 games_1 = f1.read().split('\n\n')[:-1]
             for game in games_1:
                 tmp_hands = Golf_Analyser.extract_hands(game + '\n')
                 hands_1 += [h[::-1] for h in tmp_hands]
 
+            #Collate the hands together such that they are in chronological order
             hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
 
             hands = np.array(hands)
+            #Lambda function to convert the character to its value
             val = lambda c: (ord(c)-65) - ((ord(c)-65)//13)*13 +1 if ord(c) -65 < 52 else -1
+
+            #Sums the frequency of cards over the number of games per epoch
             for i in range(len(hands)//(9*games_per_epoch)):
                 tally_0, tally_1 = [0]*14, [0]*14
                 h_0, h_1 = hands[:,0], hands[:,1]
+                #Sums the frequency for the first player
                 for h in h_0[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
                     values = list(map(val, h))
                     for v in values:
@@ -573,6 +685,7 @@ class Golf_Analyser():
                         else:
                             tally_0[v] += 1
                 data_0.append(tally_0)
+                #Sums the frequency of the second player
                 for h in h_1[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
                     values = list(map(val, h))
                     for v in values:
@@ -585,16 +698,27 @@ class Golf_Analyser():
         return (data_0, data_1)
 
     @staticmethod
-    def plot_data(data, num_columns, xlabel, ylabel, title, *data_labels): #Maybe add file directory to save graph?
+    def plot_data(data, num_columns, xlabel, ylabel, title, *data_labels):
+        """
+        Plots the given data as a line graph by using matplotlib.pyploy.
+        Each item of data is given as a column in the input data and is plotted iteratively.
+        Each data item is assigned a colour from a cyclic colour variable.
+        Args:
+            data (list/numpy.ndarray): A nested list or numpy.ndarray containing the data to be plotted.
+            num_columns (int): The number of columns of data in the input data.
+            xlabel, ylabel, title (String): The labels of the axes and the title of the graph
+            data_labels ([String]): A list of labels assigned to each columns of data
+        Returns: None
+        """
         np_data = np.array(data)
-        print(np_data.shape)
-
+        #Generate the x axis
         x_axis = np.linspace(1, len(data), len(data), dtype=int)
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
         
+        #Iteratively add each column of data to the graph
         colours = 'brgmck'
         for i in range(num_columns, 0, -1):
             plt.plot(x_axis, np_data[:, i-1], '%c-' % colours[(i-1)%len(colours)], label=data_labels[i-1])
@@ -602,292 +726,109 @@ class Golf_Analyser():
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.show()
 
-    #Not sure if needed anymore
-    @staticmethod
-    def plot_scores(dir_path):
-        files = glob.glob('%s/*.txt' % dir_path)
-        data = []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        pair_files = np.reshape(files, (len(files)//2, 2))
-        for pair in pair_files:
-            scores_0, scores_1 = [],[]
-            
-            with open(pair[0], 'r') as f0:
-                games_0 = f0.read().split('\n\n')[:-1]
-            for game in games_0:
-                scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
-            
-            with open(pair[1], 'r') as f1:
-                games_1 = f1.read().split('\n\n')[:-1]
-            for game in games_1:
-                scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
-
-            scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
-            data += scores
-        
-        Golf_Analyser.plot_data(data, 2, "Games", "Score", "Scores per game", "Player", "Opponent")
-
     @staticmethod
     def plot_mean_scores(dir_path, games_per_epoch=10, xlabel="Epochs"):
-        #files = glob.glob('%s/*.txt' % dir_path)
-        #data = []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        #pair_files = np.reshape(files, (len(files)//2, 2))
-        #for pair in pair_files:
-        #    scores_0, scores_1 = [],[]
-        #    
-        #    with open(pair[0], 'r') as f0:
-        #        games_0 = f0.read().split('\n\n')[:-1]
-        #    for game in games_0:
-        #        scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
-        #    
-        #    with open(pair[1], 'r') as f1:
-        #        games_1 = f1.read().split('\n\n')[:-1]
-        #    for game in games_1:
-        #        scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
-        #
-        #    scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
-        #    for i in range(len(scores)//games_per_epoch):
-        #        data.append(np.mean(scores[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
-        
+        """
+        Extracts and plots the mean scores obtained by both players from the game files in the given directory.
+        The mean scores are plotted on a line graph.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+            xlabel (String): The label for the x axis of the resulting graph. By default set to 'Epochs'
+        Returns: None
+        """
         data = Golf_Analyser.extract_all_mean_scores(dir_path, games_per_epoch)
         Golf_Analyser.plot_data(data, 2, xlabel, "Mean Score", "Mean scores per game across " + xlabel, "Player", "Opponent")
 
-    @staticmethod ##LOOK AT CHANGING
-    def plot_win_loss(dir_path, games_per_epoch=10):
-        files = glob.glob('%s/*.txt' % dir_path)
-        data = []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        pair_files = np.reshape(files, (len(files)//2, 2))
-        for pair in pair_files:
-            scores_0, scores_1 = [],[]
-            
-            with open(pair[0], 'r') as f0:
-                games_0 = f0.read().split('\n\n')[:-1]
-            for game in games_0:
-                scores_0.append(Golf_Analyser.extract_scores(game + '\n'))
-            
-            with open(pair[1], 'r') as f1:
-                games_1 = f1.read().split('\n\n')[:-1]
-            for game in games_1:
-                scores_1.append(Golf_Analyser.extract_scores(game + '\n')[::-1])
-
-            scores = [s for s in itertools.chain.from_iterable(zip(scores_0, scores_1))]
-
-            
-            for i in range(len(scores)//games_per_epoch):
-                epoch = scores[i*games_per_epoch:(i+1)*games_per_epoch]
-                results = [a-b for a,b in epoch]
-                win_loss = [sum(r < 0 for r in results)/games_per_epoch, sum(r > 0 for r in results)/games_per_epoch]
-                data.append(win_loss)
-        print(np.array(data).shape)
-        Golf_Analyser.plot_data(data, "Win-Loss %", "Epochs")
-
     @staticmethod
     def plot_number_matching(dir_path, games_per_epoch=10, xlabel="Epochs"):
-        files = glob.glob('%s/*.txt' % dir_path)
-        data = []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        #pair_files = np.reshape(files, (len(files)//2, 2))
-        #for pair in pair_files:
-        #    hands_0, hands_1 = [],[]
-        #    
-        #    with open(pair[0], 'r') as f0:
-        #        games_0 = f0.read().split('\n\n')[:-1]
-        #    for game in games_0:
-        #        hands_0 += Golf_Analyser.extract_hands(game + '\n')
-        #    
-        #    with open(pair[1], 'r') as f1:
-        #        games_1 = f1.read().split('\n\n')[:-1]
-        #    for game in games_1:
-        #        tmp_hands = Golf_Analyser.extract_hands(game + '\n')
-        #        hands_1 += [h[::-1] for h in tmp_hands]
-        #
-        #    hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
-        #    matches = []
-        #    for hand_pair in hands:
-        #        asc_vals_player = [ord(card) for card in hand_pair[0]]
-        #        player_matches = sum((asc_vals_player[i] > 116 and asc_vals_player[i+3] > 116) 
-        #                            or (asc_vals_player[i] < 117 and asc_vals_player[i+3] < 117 and (asc_vals_player[i] - asc_vals_player[i+3])%13==0) for i in range(3))
-        #        
-        #        asc_vals_opponent = [ord(card) for card in hand_pair[1]]
-        #        opponent_matches = sum((asc_vals_opponent[i] > 116 and asc_vals_opponent[i+3] > 116) 
-        #                            or (asc_vals_opponent[i] < 117 and asc_vals_opponent[i+3] < 117 and (asc_vals_opponent[i] - asc_vals_opponent[i+3])%13==0) for i in range(3))
-        #        matches.append([player_matches, opponent_matches])
-        #    for i in range(len(matches)//(9*games_per_epoch)):
-        #        data.append(np.sum(matches[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0)/games_per_epoch)
-
+        """
+        Extracts and plots the mean number of matches made by both players from the game files in the given directory.
+        The mean number of matches are plotted on a line graph.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+            xlabel (String): The label for the x axis of the resulting graph. By default set to 'Epochs'
+        Returns: None
+        """
         data = Golf_Analyser.extract_all_matches(dir_path, games_per_epoch)
         Golf_Analyser.plot_data(data, 2, xlabel, "Number of Matches", "Number of Matches per game across " + xlabel, "Player", "Opponent")
 
     @staticmethod
     def plot_number_of_turns(dir_path, games_per_epoch=10, xlabel="Epochs"):
-        #files = glob.glob('%s/*.txt' % dir_path)
-        #data = []
-        #
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        #pair_files = np.reshape(files, (len(files)//2, 2))
-        #for pair in pair_files:
-        #    turns_0, turns_1 = [],[]
-        #    
-        #    with open(pair[0], 'r') as f0:
-        #        games_0 = f0.read().split('\n\n')[:-1]
-        #    for game in games_0:
-        #        turns_0 += Golf_Analyser.extract_number_of_turns(game + '\n')
-        #    
-        #    with open(pair[1], 'r') as f1:
-        #        games_1 = f1.read().split('\n\n')[:-1]
-        #    for game in games_1:
-        #        turns_1 += Golf_Analyser.extract_number_of_turns(game + '\n')
-        #
-        #    turns = [t for t in itertools.chain.from_iterable(zip(turns_0, turns_1))]
-        #    
-        #    for i in range(len(turns)//(9*games_per_epoch)):
-        #        data.append(np.mean(turns[i*9*games_per_epoch:(i+1)*9*games_per_epoch], axis=0))
-
+        """
+        Extracts and plots the mean number of turns in a round from the game files in the given directory.
+        The mean number of turns are plotted on a line graph.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+            xlabel (String): The label for the x axis of the resulting graph. By default set to 'Epochs'
+        Returns: None
+        """
         data = Golf_Analyser.extract_all_turn_nums(dir_path, games_per_epoch)
         Golf_Analyser.plot_data(np.reshape(data, (len(data), 1)), 1, xlabel, "Average Number of Turns", "Average Number of Turns per round per " + xlabel, "Total number of turns")
 
     @staticmethod
     def plot_rounds_ended(dir_path, games_per_epoch=10, xlabel="Epochs"):
-        #files = glob.glob('%s/*.txt' % dir_path)
-        #data = []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        #pair_files = np.reshape(files, (len(files)//2, 2))
-        #for pair in pair_files:
-        #    end_0, end_1 = [],[]
-        #    
-        #    with open(pair[0], 'r') as f0:
-        #        games_0 = f0.read().split('\n\n')[:-1]
-        #    for game in games_0:
-        #        end_0 += Golf_Analyser.extract_rounds_ended(game + '\n')
-        #    
-        #    with open(pair[1], 'r') as f1:
-        #        games_1 = f1.read().split('\n\n')[:-1]
-        #    for game in games_1:
-        #        tmp_ends = Golf_Analyser.extract_rounds_ended(game + '\n')[0]
-        #        end_1 += [tmp_ends[:-1][::-1] + tmp_ends[-1:]]
-
-        #    ended = [e for e in itertools.chain.from_iterable(zip(end_0, end_1))]
-            
-        #    for i in range(len(ended)//games_per_epoch):
-        #        data.append(np.sum(ended[i*games_per_epoch:(i+1)*games_per_epoch], axis=0))
-
-        #Golf_Analyser.plot_data(data, 3, "Epochs", "Rounds Ended", "Number of rounds ended per Epochs", "Player", "Opponent", "Ended due to loop")
+        """
+        Extracts and plots the number of rounds ended by both players and those that were terminated 
+            from the game files in the given directory.
+        The number of rounds ended are plotted on a stacked bar chart.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+            xlabel (String): The label for the x axis of the resulting graph. By default set to 'Epochs'
+        Returns: None
+        """
         data = Golf_Analyser.extract_all_rounds_ended(dir_path, games_per_epoch)
         Golf_Analyser.plot_data_stacked_bar(data, 3, xlabel, "Rounds Ended", "Number of rounds ended per "+ xlabel, ["Player", "Opponent", "Ended due to loop"], ["blue", "red", "green"])
-        #np_data = np.array(data)
-        #print(np_data.shape)
-
-        #x_axis = np.linspace(1, len(data), len(data), dtype=int)
-
-        #plt.xlabel(xlabel)
-        #plt.ylabel("Rounds Ended")
-        #plt.title("Number of rounds ended per "+ xlabel)
-        
-        #plt.bar(x_axis, np_data[:, 0], width=1.0, color='b' , label="Player")
-        #plt.bar(x_axis, np_data[:, 1], width=1.0, bottom=np_data[:, 0], color='r' , label="Opponent")
-        #plt.bar(x_axis, np_data[:, 2], width=1.0, bottom=np_data[:, 0] + np_data[:, 1], color='g' , label="Ended due to loop")
-    
-        #plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        #plt.show()
 
     @staticmethod
     def plot_card_popularity(dir_path, games_per_epoch=10, xlabel="Epochs"):
-        #files = glob.glob('%s/*.txt' % dir_path)
-        #data_0, data_1 = [], []
-
-        #Open the files in pairs which will allow for the games to be stored in chronological order of when they were played
-        #pair_files = np.reshape(files, (len(files)//2, 2))
-        #for pair in pair_files:
-        #    hands_0, hands_1 = [],[]
-        #    
-        #    with open(pair[0], 'r') as f0:
-        #        games_0 = f0.read().split('\n\n')[:-1]
-        #    for game in games_0:
-        #        hands_0 += Golf_Analyser.extract_hands(game + '\n')
-        #    
-        #    with open(pair[1], 'r') as f1:
-        #        games_1 = f1.read().split('\n\n')[:-1]
-        #    for game in games_1:
-        #        tmp_hands = Golf_Analyser.extract_hands(game + '\n')
-        #        hands_1 += [h[::-1] for h in tmp_hands]
-
-        #    hands = [h for h in itertools.chain.from_iterable(zip(hands_0, hands_1))]
-
-        #    hands = np.array(hands)
-        #    val = lambda c: (ord(c)-65) - ((ord(c)-65)//13)*13 +1 if ord(c) -65 < 52 else -1
-        #    for i in range(len(hands)//(9*games_per_epoch)):
-        #        tally_0, tally_1 = [0]*14, [0]*14
-        #        h_0, h_1 = hands[:,0], hands[:,1]
-        #        for h in h_0[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
-        #            values = list(map(val, h))
-        #            for v in values:
-        #                if v >0:
-        #                    tally_0[v-1] += 1
-        #                else:
-        #                    tally_0[v] += 1
-        #        data_0.append(tally_0)
-        #        for h in h_1[i*9*games_per_epoch:(i+1)*9*games_per_epoch]:
-        #            values = list(map(val, h))
-        #            for v in values:
-        #                if v >0:
-        #                    tally_1[v-1] += 1
-        #                else:
-        #                    tally_1[v] += 1
-        #        data_1.append(tally_1)
-
+        """
+        Extracts and plots the frequency of cards of both players from the game files in the given directory.
+        The card frequencies are plotted on a stacked bar chart, one for each player.
+        Args:
+            dir_path (String): The path of the directory containing the game files.
+            games_per_epoch (int): The number of games played per epoch. This specifies the intervals at which to average data.
+            xlabel (String): The label for the x axis of the resulting graph. By default set to 'Epochs'
+        Returns: None
+        """
         data_0, data_1 = Golf_Analyser.extract_all_card_frequency(dir_path, games_per_epoch)
-        #np_data_0, np_data_1 = np.array(data_0), np.array(data_1)
-        #print(np_data_0.shape)
 
-        #x_axis = np.linspace(1, len(data_0), len(data_0), dtype=int)
-
-        #fig, (ax_0, ax_1) = plt.subplots(nrows=2)
-
+        #The labels and colours of the data
         colours = ['red', 'blue', 'green', 'magenta', 'orange', 'cyan', 'purple', 'grey', 'lime', 'yellow', 'black', 'salmon', 'teal', 'navy']
         labels = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Joker']
 
         Golf_Analyser.plot_data_stacked_bar(data_0, 14, xlabel, "Number of times cards in hand", "Popularity of cards per " + xlabel + " for Player", labels, colours, 540)
         Golf_Analyser.plot_data_stacked_bar(data_1, 14, xlabel, "Number of times cards in hand", "Popularity of cards per " + xlabel + " for Opponent", labels, colours, 540)
 
-        #for i in range(14):
-        #    plt.bar(x_axis, np_data_0[:,i], width=1.0, bottom=np.sum(np_data_0[:,:i], axis=1), color=colors[i], label=labels[i]) 
-        #plt.ylim(top=540)
-        #plt.xlabel(xlabel)
-        #plt.ylabel("Number of times cards in hand")
-        #plt.title("Popularity of cards per " + xlabel + " for Player")
-        #plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        #plt.show()
-        #for i in range(14):
-        #    plt.bar(x_axis, np_data_1[:,i], width=1.0, bottom=np.sum(np_data_1[:,:i], axis=1), color=colors[i], label=labels[i]) 
-        #plt.ylim(top=540)
-        #plt.xlabel(xlabel)
-        #plt.ylabel("Number of times cards in hand")
-        #plt.title("Popularity of cards per " + xlabel + " for Opponent")
-        #plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        #plt.show()
-
     @staticmethod
     def plot_data_stacked_bar(data, num_bars, xlabel, ylabel, title, data_labels, colours, ylimit=None):
-        #colors = ['red', 'blue', 'green', 'magenta', 'orange', 'cyan', 'purple', 'grey', 'lime', 'yellow', 'black', 'salmon', 'teal', 'navy']
-        
+        """
+        Plots the given data as a stacked bar graph by using matplotlib.pyploy.
+        Each item of data is given as a column in the input data and is plotted iteratively.
+        Args:
+            data (list/numpy.ndarray): A nested list or numpy.ndarray containing the data to be plotted.
+            num_bars (int): The number of columns of data in the input data/ bars on the graph.
+            xlabel, ylabel, title (String): The labels of the axes and the title of the graph
+            data_labels ([String]): A list of labels assigned to each columns of data.
+            colours ([String]): A list of colours accepted by matplotlib.pyplot for each data item.
+            ylimit (int/float): The maximum y value the graph can display. Optional and set to None by default
+        Returns: None
+        """
         np_data = np.array(data)
-        print(np_data.shape)
-
+        #Generates the x axis
         x_axis = np.linspace(1, len(data), len(data), dtype=int)
 
+        #Iteratively plots each bar of data
         for i in range(num_bars):
             plt.bar(x_axis, np_data[:,i], width=1.0, bottom=np.sum(np_data[:,:i], axis=1), color=colours[i], label=data_labels[i]) 
         
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
+        #Sets a y limit of the graph if one is specified
         if ylimit:
             plt.ylim(top=ylimit)
     

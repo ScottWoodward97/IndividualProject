@@ -1,8 +1,8 @@
 """
 ---analyse_neat.py---
-Contains the methods that analyse the population data of the NEAT training process.
-These plot graphs that map the metrics of the best and worst solutions (fitness) in the population as well as the population average.
-Where relevant, the highest and lowest of each metric in the population is also plotted.
+Contains the methods that analyse and extract the population data of the NEAT training process.
+These extract data of the best and worst solutions (fitness) in the population as well as the population average.
+Where relevant, the highest and lowest of each metric in the population are also extracted.
 """
 from golf import Golf_Analyser
 import glob
@@ -12,12 +12,12 @@ import numpy as np
 
 def extract_mean_scores(dir_path, games_per_solution=10):
     """
-    Plots the mean scores at each generation obtained by the population during training.
-    The mean scores of the best and worst players in the population as well as the population average.
+    Calculates the mean scores at each generation obtained by the population during training.
+    This includes the mean scores of the best and worst players in the population (by fitness) as well as the population average.
     Args:
         dir_path (String): The directory of the player trained under NEAT.
         games_per_solution(int): The number of games each solution plays in its fitness calculation. Default set to 10.
-    Returns: None
+    Returns: A nested list containing the data for the best player, worst player and population average.
     """
     #Load the paths of each generation's game file from the relevant directory
     files = glob.glob('%s/game_files/*.txt' % dir_path)
@@ -37,17 +37,15 @@ def extract_mean_scores(dir_path, games_per_solution=10):
         pop_av.append(float(np.mean(mean_solution_scores)))
 
     return list(zip(best_solution, worst_solution, pop_av))
-    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av)), 3, "Generations", "Mean Score", "Mean Score over Generations", "Best Solution", "Worst Solution", "Population Average")
 
 def extract_mean_number_of_turns(dir_path, games_per_solution=10):
     """
-    Plots the mean number of turns at each generation obtained by the population during training.
-    The mean number of turns of the best and worst players in the population (by fitness) as well as the population average.
-    The highest and lowest number of turns by solutions in the popualtion are also plotted.
+    Calculates mean number of turns made at each generation obtained by the population during training.
+    This includes the mean number of turns made by the best and worst players in the population (by fitness) as well as the population highest, lowest and average.
     Args:
         dir_path (String): The directory of the player trained under NEAT.
         games_per_solution(int): The number of games each solution plays in its fitness calculation. Default set to 10.
-    Returns: None
+    Returns: A nested list containing the data for the best player, worst player and population highest, lowest and average.
     """
     #Load the paths of each generation's game file from the relevant directory
     files = glob.glob('%s/game_files/*.txt' % dir_path)
@@ -75,17 +73,15 @@ def extract_mean_number_of_turns(dir_path, games_per_solution=10):
         pop_av.append(float(np.mean(solution_turns)/(9*games_per_solution)))
 
     return list(zip(best_solution, worst_solution, pop_av, highest, lowest))
-    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Number of Turns per Round", "Average Number of Turns per Round over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
 
 def extract_mean_number_of_matches(dir_path, games_per_solution=10):
     """
-    Plots the mean number of matches made at each generation obtained by the population during training.
-    The mean number of matches of the best and worst players in the population (by fitness) as well as the population average.
-    The highest and lowest number of matches by solutions in the popualtion are also plotted.
+    Calculates mean number of matches made at each generation obtained by the population during training.
+    This includes the mean number of matches of the best and worst players in the population (by fitness) as well as the population highest, lowest and average.
     Args:
         dir_path (String): The directory of the player trained under NEAT.
         games_per_solution(int): The number of games each solution plays in its fitness calculation. Default set to 10.
-    Returns: None
+    Returns: A nested list containing the data for the best player, worst player and population highest, lowest and average.
     """
     #Load the paths of each generation's game file from the relevant directory
     files = glob.glob('%s/game_files/*.txt' % dir_path)
@@ -114,7 +110,6 @@ def extract_mean_number_of_matches(dir_path, games_per_solution=10):
         pop_av.append(float(np.mean(solution_matches)/2))
         
     return list(zip(best_solution, worst_solution, pop_av, highest, lowest))
-    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Matches per Game", "Average Matches per Game over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
 
 def extract_matches_round(hands):
     """
@@ -137,9 +132,3 @@ def extract_matches_round(hands):
                         or (asc_vals_opponent[i] < 117 and asc_vals_opponent[i+3] < 117 and (asc_vals_opponent[i] - asc_vals_opponent[i+3])%13==0) for i in range(3))
         matches.append([player_matches, opponent_matches])
     return matches
-
-#import sys
-#p = sys.argv[1] #"games/neat/one_hot_hand_2"
-#plot_mean_scores(p)
-#plot_mean_number_of_turns(p)
-#plot_mean_number_of_matches(p)

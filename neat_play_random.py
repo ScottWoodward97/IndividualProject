@@ -48,7 +48,6 @@ player = Golf_Player(state_function, fa.NEAT_Func_Approx(state_function, network
 random_player = Random_Golf_Player()
 
 RANDOM_GAMES = ["",""]
-t = time.time()
 #Play the games against the random player
 for n in range(2500):
     random_games = g.play_pair(player, random_player)
@@ -59,10 +58,8 @@ for n in range(2500):
     #Save the game data to file every 250 games (125 pairs)
     if (n+1)%125 == 0:  
         filename = time.strftime("%Y%m%d-%H%M%S-", time.gmtime())
+        #Saves games at each position to separate files
         for i in range(2):
-            with open(os.path.join(DIR_PATH_SAVE, '%s%d.txt' % (filename, i)), 'w+') as f: #look at a+ instead, will append if the file exists
+            with open(os.path.join(DIR_PATH_SAVE, '%s%d.txt' % (filename, i)), 'w+') as f:
                 f.write(RANDOM_GAMES[i])
         RANDOM_GAMES = ["",""]
-
-t_2 = time.time()
-print(t_2-t)

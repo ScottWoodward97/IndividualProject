@@ -1,3 +1,11 @@
+"""
+---player.py---
+Contains all three player classes that will be used to play the game of golf.
+The Random_Golf_Player is a player that makes moves randomly, simulating a player with no inteligence.
+The Greedy_Golf_Player is a heuristic player that still makes moves randomly but has some knowledge of the game.
+    This means that they can make human like decisions and thus simulate a more human-like player.
+The Golf_player is the player that makes moves using a funtion approximator. This is trained using various training algorithms.
+"""
 from abc import ABC, ABCMeta, abstractmethod
 
 import random
@@ -10,80 +18,100 @@ from deck import Deck
 
 class Player(ABC):
     """
+    An abstract class that contains all methods and attributes that a player needs to play the game of golf.
+    Attributes:
+        hand (list): Stores the hand of the player
+        function_approximator (Func_Approx): The function approximator of the player that is used to evaluate game states.
     """
     def __init__(self, state_function, function_approximator):
-        self.hand = [] ##Create a custom hand for the game
-        #self.state_function = state_function
+        self.hand = []
+        #If a function approximator is not provided, create a coevolution one with 27 hidden nodes
         if function_approximator is None:
             self.function_approximator = CoEvo_Func_Approx(27, state_function)
         else:
-            self.function_approximator = function_approximator ##Load in a function_approximator
+            self.function_approximator = function_approximator
 
 
-    ##POLICIES
     @abstractmethod
     def choose_draw(self, top_discard, game_state):
         """
+        Given the state of the game and the card on top of the discard pile,
+            the player decides whether to draw from the diacrd pile or the deck.
+        Args:
+            top_discard (Deck.Card): The top card of the discard pile
+            game_state ([int]): The current game state
         """
-        #Store values of all states with all possible cards drawn from deck
-        #Store values of all states with card drawn from discard
-        #If deck state is better more than 50% of the time draw from deck, else from discard
-        #ACTIONS.DRAW_DECK or ACTIONS.DRAW_DISCARD
-
         pass
 
     @abstractmethod
     def choose_discard(self, drawn_card, game_state):
         """
+        Given the state of the game and the card that has been drawn,
+            the player decides what card they should discard.
+        Args:
+            top_discard (Deck.Card): The card drawn
+            game_state ([int]): The current game state
         """
         pass
 
 class Golf_Player(Player):
     """
+    The Golf_Player is a player that makes decisions using a function approximator.
+    This function approximator evaluates any game state and the values help with the decisions making.
+    Attributes:
+        state_function (function): Converts the game state into a format suitable for the function approximator
+        function_approximator (Func_Approx): The function approximator of the player that is used to evaluate game states.
     """
     def __init__(self, state_function, function_approximator=None):
         super().__init__(state_function, function_approximator)
 
     def choose_draw(self, top_discard, game_state):
         """
+        Given the state of the game and the card on top of the discard pile,
+            the player decides whether to draw from the diacrd pile or the deck.
+        The player uses a policy along with the values returned by the function approximator to decide on the drawing location/
+        If the maximum value of the card on top of the discard pile is better than 50% of the cards that could be in the deck,
+            then the player draws from the discard pile.
+        If not, or if the card does not improve the value of the hand at all, then the player draws from the deck.
+        Args:
+            top_discard (Deck.Card): The top card of the discard pile
+            game_state ([int]): The current game state
+        Returns: The drawing location as an Action
         """
-        #val, suit = top_discard.get_val_suit()
+        #Calculate the maximum value of the card and the current value of the game state
         val_discard, _ = self.max_val_ind_exchange(Golf.get_card_index(top_discard), game_state)
-
         val_current = self.function_approximator.value_of_state(game_state)
+
+        #Draw from the deck if the card doesn't improve the hand
         if val_current > val_discard:
             return Actions.DRAW_DECK
 
-        #Tallys if unknown exchange is over or less than or equal to val_discard
         over, leq = 0, 0
-
-        #can change to a single variable, if + then over else if - then under
         for i in range(len(game_state)):
-            if game_state[i] == -1: #Locations.UNKNOWN:
-                #v, s = self.get_val_suit(i)
+            #Counts the number of unknwon cards that have a greater maxmimum value
+            if game_state[i] == -1: 
                 val, _ = self.max_val_ind_exchange(i, game_state)
                 if val > val_discard:
                     over += 1
                 else:
                     leq += 1
 
+        #Draw from deck if there are more unknwon cards that are better, else draw from the deck
         return Actions.DRAW_DECK if over > leq else Actions.DRAW_DISCARD
-
 
     def choose_discard(self, drawn_card, game_state):
         """
+        Given the state of the game and the card that has been drawn,
+            the player decides what card they should discard.
+        The player finds the exchange that produces the highest state evaluation.
+        If the card does not improve on the hand then it is discarded, unless it has been drawn from the discard pile.
+        Otherwise, the player exchanges with the card that produces the best game state.
+        Args:
+            top_discard (Deck.Card): The card drawn
+            game_state ([int]): The current game state
+        Returns: The discarded card location as an Action
         """
-        ##If unknown, just add drawn card to hand to evaluate,
-        ##If known, also add discarded card to discard pile
-
-        ##Should also compare all switches with an unswitched version of the hand.
-
-        #Need to consider difference between card drawn from deck and discard, not let card drawn from discard be discarded.
-        #Check what position card was in?? If -2 then don't let discard, if -1 then allow??
         
-        
-        #v_d, s_d = drawn_card.get_val_suit()
-
         val, ind = self.max_val_ind_exchange(Golf.get_card_index(drawn_card), game_state)
 
         #Prevent player from discarding card drawn from discard pile
@@ -98,18 +126,23 @@ class Golf_Player(Player):
 
     def max_val_ind_exchange(self, exchange_index, game_state):
         """
+        Calculates the maximum value of a card by evaluating all potential states obtained by exchanging it 
+            with every card in the player's hand.
+        Args:
+            exchange_index (int): The index of the card that is being exchanged. Allows for easier manipulation of the game states.
+            game_state ([int]): The current game state
+        Returns: A tuple containing the maximum value of the card and the index of exchanged card that results in that maximum value
         """
         max_val, index = -math.inf, 0
-        #ind_d = (suit-1)*13 + value-1 #Can replace with Golf method
 
+        #Cycles over each card in the player's hand.
         for i, card in enumerate(self.hand):
+            #Prevents game state from being overwritten
             temp_state = game_state[:]
             temp_state[exchange_index] = i
 
-            #v, s = card.get_val_suit()
-            #if v > 0:
-            ind = Golf.get_card_index(card) #(s-1)*13 + v-1 #replace this too
-            #get_card_index returns None if card is hidden
+            ind = Golf.get_card_index(card)
+            #If the card is not hidden, then the player would known what card would go to the discard pile
             if ind is not None:
                 temp_state[ind] = -2
 
@@ -119,20 +152,26 @@ class Golf_Player(Player):
 
         return max_val, index
 
-    def get_val_suit(self, index):
-        """
-        DONT THINK THIS IS NEEDED HERE, MAYBE IN A METHOD TO MAKE DATA VERBOSE??
-        """
-        suit = (index // 13) + 1 if index <= 51 else (-2 if index == 52 else -1)
-
-        val = (index - (suit-1)*13 + 1) if index >= 0 else -1
-
-        return (val, suit)
-
     def update_network(self, opposing_player, crossover=0.05):
+        """
+        Updates the weights of the neural network in accordance with the coevolution algorithm.
+        Moves the weights of the network in the direction of opposing_func_approx by the crossover rate.
+        Args:
+            opposing_func_approx (CoEvo_Func_Approx): The opposing (better) function approximator of the opponent
+            crossover (float): The crossover rate of the update, the percentage in which the weights are moved in the direction of the opposing_func_approx.
+                By default, this is set to 0.05.
+        Returns: None
+        """
         self.function_approximator.update(opposing_player.function_approximator, crossover)
 
     def add_noise(self, mean=0.0, sd=0.1):
+        """
+        Adds Guassian noise to all weights in the nerual network via the numpy.random.normal method.
+        Args:
+            mean (float): The centre of the distribution. Default set to 0.0.
+            sd (float): The standard deviation of the distribution. Default set to 0.1.
+        Returns: None
+        """
         self.function_approximator.add_noise(mean, sd)
 
 class Random_Golf_Player(Player):

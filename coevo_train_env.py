@@ -11,7 +11,6 @@ Args:
     STATE_FUNCTION (String): Second command line argument. The name of the function approximator used by the player.
         Must be one of either "one_hot_hand", "one_hot_state_and_hand", or "one_hot_state". Only used when no player files exist in DIR_PATH
 """
-import time
 import pickle
 import os
 import sys
@@ -80,8 +79,6 @@ except FileNotFoundError:
 #Create a golf and random_player instance
 g = Golf()
 random_player = Random_Golf_Player()
-
-t_1 = time.time()
 
 #initialise parameters to monitor user input
 run = True
@@ -161,6 +158,3 @@ while run:
 
     #Detect if user has entered "exit"
     run = input_queue.empty()
-
-t_2 = time.time()
-print(t_2 - t_1)

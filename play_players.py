@@ -65,7 +65,7 @@ def extract_player(flag, path):
         raise AttributeError("Unknown flag %s" % flag)
     return p
 
-
+#Extract the players from the command line arguments
 player1 = extract_player(sys.argv[1], sys.argv[2])
 player2 = extract_player(sys.argv[3], sys.argv[4])
 save_path = sys.argv[5] 

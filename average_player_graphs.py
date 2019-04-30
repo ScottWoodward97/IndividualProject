@@ -176,11 +176,3 @@ def average_population_mean_matches(dir_path, prefix):
 
     #Plot data
     Golf_Analyser.plot_data(agg, 5, "Generations", "Average Matches per Game", "Average Matches per Game over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
-
-p = "one_hot_hand"
-average_mean_scores("games/neat_random", p, xlabel="Generations")
-average_number_matches("games/neat_random", p, xlabel="Generations")
-average_card_frequency("games/neat_random", p, xlabel="Generations")
-average_rounds_ended("games/neat_random", p, xlabel="Generations")
-#average_population_mean_scores("games/neat", p)
-#average_population_mean_matches("games/neat", p)
