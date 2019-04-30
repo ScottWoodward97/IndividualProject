@@ -10,7 +10,7 @@ import os
 import numpy as np
 
 
-def plot_mean_scores(dir_path, games_per_solution=10):
+def extract_mean_scores(dir_path, games_per_solution=10):
     """
     Plots the mean scores at each generation obtained by the population during training.
     The mean scores of the best and worst players in the population as well as the population average.
@@ -36,9 +36,10 @@ def plot_mean_scores(dir_path, games_per_solution=10):
         worst_solution.append(float(max(mean_solution_scores)))
         pop_av.append(float(np.mean(mean_solution_scores)))
 
-    Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av)), 3, "Generations", "Mean Score", "Mean Score over Generations", "Best Solution", "Worst Solution", "Population Average")
+    return list(zip(best_solution, worst_solution, pop_av))
+    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av)), 3, "Generations", "Mean Score", "Mean Score over Generations", "Best Solution", "Worst Solution", "Population Average")
 
-def plot_mean_number_of_turns(dir_path, games_per_solution=10):
+def extract_mean_number_of_turns(dir_path, games_per_solution=10):
     """
     Plots the mean number of turns at each generation obtained by the population during training.
     The mean number of turns of the best and worst players in the population (by fitness) as well as the population average.
@@ -72,10 +73,11 @@ def plot_mean_number_of_turns(dir_path, games_per_solution=10):
         lowest.append(float(min(solution_turns)/(9*games_per_solution)))
         highest.append(float(max(solution_turns)/(9*games_per_solution)))
         pop_av.append(float(np.mean(solution_turns)/(9*games_per_solution)))
-        
-    Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Number of Turns per Round", "Average Number of Turns per Round over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
 
-def plot_mean_number_of_matches(dir_path, games_per_solution=10):
+    return list(zip(best_solution, worst_solution, pop_av, highest, lowest))
+    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Number of Turns per Round", "Average Number of Turns per Round over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
+
+def extract_mean_number_of_matches(dir_path, games_per_solution=10):
     """
     Plots the mean number of matches made at each generation obtained by the population during training.
     The mean number of matches of the best and worst players in the population (by fitness) as well as the population average.
@@ -111,7 +113,8 @@ def plot_mean_number_of_matches(dir_path, games_per_solution=10):
         highest.append(float(max(solution_matches)/2))
         pop_av.append(float(np.mean(solution_matches)/2))
         
-    Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Matches per Game", "Average Matches per Game over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
+    return list(zip(best_solution, worst_solution, pop_av, highest, lowest))
+    #Golf_Analyser.plot_data(list(zip(best_solution, worst_solution, pop_av, highest, lowest)), 5, "Generations", "Average Matches per Game", "Average Matches per Game over Generations", "Best Solution", "Worst Solution", "Population Average", "Population Highest", "Population Lowest")
 
 def extract_matches_round(hands):
     """
@@ -135,8 +138,8 @@ def extract_matches_round(hands):
         matches.append([player_matches, opponent_matches])
     return matches
 
-import sys
-p = sys.argv[1] #"games/neat/one_hot_hand_2"
-plot_mean_scores(p)
-plot_mean_number_of_turns(p)
-plot_mean_number_of_matches(p)
+#import sys
+#p = sys.argv[1] #"games/neat/one_hot_hand_2"
+#plot_mean_scores(p)
+#plot_mean_number_of_turns(p)
+#plot_mean_number_of_matches(p)
